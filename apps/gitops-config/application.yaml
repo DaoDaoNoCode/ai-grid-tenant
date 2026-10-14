@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  # Uses server-side apply so this app owns only the controller sizing and
+  # GitOps admin group membership declared under manifests/.
+  name: gitops-config
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kahowell/ai-grid-tenant.git
+    targetRevision: HEAD
+    path: apps/gitops-config/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openshift-gitops
+  syncPolicy:
+    automated:
+      # The ArgoCD CR is owned by the OpenShift GitOps operator; pruning the
+      # Application must not delete that instance.
+      prune: false
+      selfHeal: true
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 10m
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true

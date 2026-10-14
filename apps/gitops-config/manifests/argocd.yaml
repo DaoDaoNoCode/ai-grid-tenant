@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1beta1
+kind: ArgoCD
+metadata:
+  name: openshift-gitops
+  namespace: openshift-gitops
+spec:
+  # The controller now caches both the in-cluster destination and the
+  # GitOpsCluster proxy destination; 2 GiB is not enough during startup.
+  controller:
+    resources:
+      requests:
+        memory: 2Gi
+      limits:
+        memory: 4Gi
