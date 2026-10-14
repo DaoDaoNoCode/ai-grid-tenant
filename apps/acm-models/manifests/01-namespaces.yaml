@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-grid-internal-models
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    # Identifies the namespace as allowed for Grid routing (automatically creates InferenceProvider for each LLMInferenceService in this namespace).
+    grid.opendatahub.io/allowed: "true"

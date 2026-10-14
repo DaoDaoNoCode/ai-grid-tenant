@@ -40,6 +40,15 @@ components:
         managementState: Managed
   kserve:
     gateway:
+      annotations:
+        grid.opendatahub.io/serving: >-
+          {
+            "networkName": "grid-local",
+            "namespace": "grid-system",
+            "serviceAccount": "grid-model-client",
+            "tokenSecret": "grid-model-client-token",
+            "siteLabels": "grid.praxis.fast/provider-site=local"
+          }
       spec:
         listeners:
           - name: https
@@ -56,7 +65,7 @@ components:
                     operator: In
                     values:
                     - openshift-ingress
-                    # TODO - <LLM_INFERENCE_SERVICE_NAMESPACE>
+                    - ai-grid-internal-models
   aigateway:
     modelsAsAService:
       gateway:
@@ -76,4 +85,6 @@ components:
                       operator: In
                       values:
                       - openshift-ingress
-                      # TODO - <LLM_INFERENCE_SERVICE_NAMESPACE>
+                      # MaaS models in a Grid are represented by ExternalModel resources pointing to the Grid GW.
+                      - models-as-a-service
+                      - redhat-ai-gateway-infra

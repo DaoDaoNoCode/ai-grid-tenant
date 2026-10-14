@@ -1,0 +1,16 @@
+apiVersion: inference.opendatahub.io/v1alpha1
+kind: ExternalProvider
+metadata:
+  annotations:
+    inference.opendatahub.io/port: "443"
+    inference.opendatahub.io/tls: "true"
+    argocd.argoproj.io/sync-wave: "2"
+  name: grid-provider
+  namespace: models-as-a-service
+spec:
+  auth:
+    secretRef:
+      name: grid-maas-upstream
+    type: apikey
+  endpoint: grid-gateway.grid-system.svc.cluster.local
+  provider: openai
