@@ -1,4 +1,8 @@
 module.exports = {
+  platform: 'github',
+  repositories: [
+    'kahowell/ai-grid-tenant'
+  ],
   hostRules: [
     {
       hostType: 'docker',
