@@ -1,0 +1,83 @@
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: RedisReplication
+metadata:
+  name: limitador-redis
+  namespace: limitador-redis
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  clusterSize: 3
+  redisConfig:
+    dynamicConfig:
+      - "maxmemory 6gb"
+      - "maxmemory-policy noeviction"
+  kubernetesConfig:
+    image: registry.redhat.io/rhel9/redis-7@sha256:8e0c52a2f304473c1f62d1112e116e0e8d541ed9cbeaa86f6ece3318146be105
+    imagePullPolicy: IfNotPresent
+    # redisSecret:
+    #   name: limitador-redis-auth
+    #   key: password
+    resources:
+      requests:
+        cpu: "1"
+        memory: 2Gi
+      limits:
+        cpu: "4"
+        memory: 8Gi
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+  sentinel:
+    size: 3
+    image: registry.redhat.io/rhel9/redis-7@sha256:8e0c52a2f304473c1f62d1112e116e0e8d541ed9cbeaa86f6ece3318146be105
+    imagePullPolicy: IfNotPresent
+    # redisSecret:
+    #   name: limitador-redis-sentinel-auth
+    #   key: password
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 250m
+        memory: 128Mi
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            role: sentinel
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    runAsNonRoot: true
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app: limitador-redis
+                redis_setup_type: replication
+            topologyKey: kubernetes.io/hostname
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: limitador-redis
+          redis_setup_type: replication

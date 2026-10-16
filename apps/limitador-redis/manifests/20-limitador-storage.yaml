@@ -1,0 +1,13 @@
+apiVersion: limitador.kuadrant.io/v1alpha1
+kind: Limitador
+metadata:
+  name: limitador
+  namespace: kuadrant-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-options: SkipPrune=true
+spec:
+  storage:
+    redis:
+      configSecretRef:
+        name: limitador-redis

@@ -1,0 +1,9 @@
+apiVersion: addon.open-cluster-management.io/v1alpha1
+kind: ManagedClusterAddOn
+metadata:
+  name: submariner
+  namespace: local-cluster
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  installNamespace: submariner-operator
