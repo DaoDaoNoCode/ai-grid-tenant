@@ -1,0 +1,11 @@
+apiVersion: submariner.io/v1alpha1
+kind: Broker
+metadata:
+  name: submariner-broker
+  namespace: default-broker
+  labels:
+    cluster.open-cluster-management.io/backup: submariner
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  globalnetEnabled: false
