@@ -12,7 +12,7 @@ spec:
       - "maxmemory 6gb"
       - "maxmemory-policy noeviction"
   kubernetesConfig:
-    image: registry.redhat.io/rhel9/redis-7@sha256:8e0c52a2f304473c1f62d1112e116e0e8d541ed9cbeaa86f6ece3318146be105
+    image: registry.redhat.io/rhel9/redis-7@sha256:8e0c52a2f304473c1f62d1112e116e0e8d541ed9cbeea86f6ece3318146be105
     imagePullPolicy: IfNotPresent
     # redisSecret:
     #   name: limitador-redis-auth
@@ -34,7 +34,7 @@ spec:
             storage: 10Gi
   sentinel:
     size: 3
-    image: registry.redhat.io/rhel9/redis-7@sha256:8e0c52a2f304473c1f62d1112e116e0e8d541ed9cbeaa86f6ece3318146be105
+    image: registry.redhat.io/rhel9/redis-7@sha256:8e0c52a2f304473c1f62d1112e116e0e8d541ed9cbeea86f6ece3318146be105
     imagePullPolicy: IfNotPresent
     # redisSecret:
     #   name: limitador-redis-sentinel-auth
