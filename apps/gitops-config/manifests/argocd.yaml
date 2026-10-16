@@ -12,3 +12,128 @@ spec:
         memory: 2Gi
       limits:
         memory: 4Gi
+  # RedisReplication is intentionally omitted because the Redis operator does
+  # not currently populate a resource status for Argo to evaluate.
+  resourceHealthChecks:
+    - group: limitador.kuadrant.io
+      kind: Limitador
+      check: |
+        hs = {}
+        if obj.status == nil or obj.status.conditions == nil then
+          hs.status = "Progressing"
+          hs.message = "Waiting for Limitador status"
+          return hs
+        end
+        if obj.metadata.generation ~= nil and obj.status.observedGeneration ~= nil and obj.status.observedGeneration < obj.metadata.generation then
+          hs.status = "Progressing"
+          hs.message = "Waiting for the current Limitador generation"
+          return hs
+        end
+        for _, condition in ipairs(obj.status.conditions) do
+          if condition.type == "Ready" then
+            if condition.status == "True" then
+              hs.status = "Healthy"
+              hs.message = condition.message
+              return hs
+            elseif condition.status == "False" then
+              hs.status = "Degraded"
+              hs.message = condition.message
+              return hs
+            end
+          end
+        end
+        hs.status = "Progressing"
+        hs.message = "Waiting for the Limitador Ready condition"
+        return hs
+    - group: multicluster.x-k8s.io
+      kind: ServiceExport
+      check: |
+        hs = {}
+        if obj.status == nil or obj.status.conditions == nil then
+          hs.status = "Progressing"
+          hs.message = "Waiting for ServiceExport status"
+          return hs
+        end
+        for _, condition in ipairs(obj.status.conditions) do
+          if condition.type == "Valid" and condition.status == "False" then
+            hs.status = "Degraded"
+            hs.message = condition.message
+            return hs
+          end
+          if condition.type == "Ready" then
+            if condition.status == "True" then
+              hs.status = "Healthy"
+              hs.message = condition.message
+              return hs
+            elseif condition.status == "False" then
+              hs.status = "Degraded"
+              hs.message = condition.message
+              return hs
+            end
+          end
+        end
+        hs.status = "Progressing"
+        hs.message = "Waiting for the ServiceExport Ready condition"
+        return hs
+    - group: addon.open-cluster-management.io
+      kind: ManagedClusterAddOn
+      check: |
+        hs = {}
+        if obj.status == nil or obj.status.conditions == nil then
+          hs.status = "Progressing"
+          hs.message = "Waiting for ManagedClusterAddOn status"
+          return hs
+        end
+        local available = false
+        local progressing = false
+        for _, condition in ipairs(obj.status.conditions) do
+          if condition.status == "True" then
+            if string.sub(condition.type, -9) == "Degraded" then
+              hs.status = "Degraded"
+              hs.message = condition.message
+              return hs
+            elseif condition.type == "Progressing" then
+              progressing = true
+            elseif condition.type == "Available" then
+              available = true
+            end
+          end
+        end
+        if progressing then
+          hs.status = "Progressing"
+          hs.message = "ManagedClusterAddOn is progressing"
+          return hs
+        end
+        if available then
+          hs.status = "Healthy"
+          hs.message = "ManagedClusterAddOn is available"
+          return hs
+        end
+        hs.status = "Progressing"
+        hs.message = "Waiting for the ManagedClusterAddOn Available condition"
+        return hs
+    - group: submarineraddon.open-cluster-management.io
+      kind: SubmarinerConfig
+      check: |
+        hs = {}
+        if obj.status == nil or obj.status.conditions == nil then
+          hs.status = "Progressing"
+          hs.message = "Waiting for SubmarinerConfig status"
+          return hs
+        end
+        for _, condition in ipairs(obj.status.conditions) do
+          if condition.type == "SubmarinerConfigApplied" then
+            if condition.status == "True" then
+              hs.status = "Healthy"
+              hs.message = condition.message
+              return hs
+            elseif condition.status == "False" then
+              hs.status = "Degraded"
+              hs.message = condition.message
+              return hs
+            end
+          end
+        end
+        hs.status = "Progressing"
+        hs.message = "Waiting for the SubmarinerConfigApplied condition"
+        return hs
