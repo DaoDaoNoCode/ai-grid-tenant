@@ -86,9 +86,15 @@ spec:
         end
         local available = false
         local progressing = false
+        local degradedTypes = {
+          Degraded = true,
+          SubmarinerAgentDegraded = true,
+          SubmarinerConnectionDegraded = true,
+          RouteAgentConnectionDegraded = true
+        }
         for _, condition in ipairs(obj.status.conditions) do
           if condition.status == "True" then
-            if string.sub(condition.type, -9) == "Degraded" then
+            if degradedTypes[condition.type] then
               hs.status = "Degraded"
               hs.message = condition.message
               return hs

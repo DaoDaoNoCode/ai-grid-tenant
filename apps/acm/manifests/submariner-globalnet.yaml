@@ -10,3 +10,5 @@ metadata:
     argocd.argoproj.io/sync-wave: "3"
 data:
   globalnetEnabled: "true"
+  globalnetCidrRange: '"242.0.0.0/8"'
+  globalnetClusterSize: "65536"
