@@ -46,13 +46,6 @@ spec:
       limits:
         cpu: 250m
         memory: 128Mi
-    topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: ScheduleAnyway
-        labelSelector:
-          matchLabels:
-            role: sentinel
   podSecurityContext:
     runAsNonRoot: true
     seccompProfile:
