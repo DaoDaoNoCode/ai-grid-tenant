@@ -8,4 +8,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  globalnetEnabled: false
+  # Globalnet is enabled because the cluster CIDRs are not centrally controlled
+  # and may overlap. Submariner allocates global CIDRs and NATs cross-cluster
+  # traffic, avoiding conflicts at the cost of additional translation overhead.
+  globalnetEnabled: true
