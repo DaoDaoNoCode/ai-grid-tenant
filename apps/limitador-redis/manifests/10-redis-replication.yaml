@@ -7,6 +7,30 @@ metadata:
     argocd.argoproj.io/sync-wave: "3"
 spec:
   clusterSize: 3
+  livenessProbe:
+    exec:
+      command:
+        - redis-cli
+        - -h
+        - 127.0.0.1
+        - -p
+        - "6379"
+        - ping
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readinessProbe:
+    exec:
+      command:
+        - redis-cli
+        - -h
+        - 127.0.0.1
+        - -p
+        - "6379"
+        - ping
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
   redisConfig:
     dynamicConfig:
       - "maxmemory 6gb"
