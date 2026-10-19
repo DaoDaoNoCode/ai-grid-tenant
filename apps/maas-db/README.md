@@ -1,0 +1,81 @@
+# MaaS shared PostgreSQL database
+
+This app defines the shared PostgreSQL database for `maas-api`. CloudNativePG
+runs a three-instance writable cluster on `local-cluster`, and an ACM-generated
+Argo CD Application defines a one-instance read-only replica for every other
+registered managed cluster.
+
+The first rollout is intentionally manual and non-pruning. Sync `maas-db`,
+review the generated Applications, then sync each generated Application. After
+the database is validated, automated sync can be enabled in Git.
+
+## Topology
+
+- The writable primary is `maas-db` in the `maas-db` namespace on
+  `local-cluster`.
+- The `maas-db-rw` Service is exported through Submariner as
+  `maas-db-rw.maas-db.svc.clusterset.local`.
+- Each remote cluster runs `maas-read`, a CloudNativePG replica cluster using
+  `pg_basebackup` and continuous TLS streaming replication.
+- `local-cluster` exposes `maas-read-ro` as an ExternalName to its local
+  CloudNativePG read-only Service. Every cluster therefore has the same read
+  endpoint:
+
+```text
+maas-read-ro.maas-db.svc.cluster.local:5432
+```
+
+- `maas-api` reads `maas-db-config` from its own namespace. The Secret has
+  `DB_CONNECTION_URL` for the writable service and
+  `DB_READ_CONNECTION_URL` for the local read-only service.
+- CloudNativePG generates the replication client certificate, CA, and
+  application credentials on `local-cluster`. ACM policies copy them to remote
+  clusters without storing plaintext secrets in Git.
+- New managed clusters are selected automatically through the `global` cluster
+  set. Argo CD creates a replica Application for each ACM-registered cluster.
+
+## Rollout
+
+The app depends on the existing ACM GitOps integration that creates Argo CD
+cluster Secrets with the `apps.open-cluster-management.io/acm-cluster: "true"`
+label. After pushing the app, sync `maas-db` in Argo CD. The ApplicationSet
+creates:
+
+- `maas-db-local-cluster` for the writable primary.
+- One `maas-db-<cluster-name>` Application for each remote managed cluster.
+
+The replication-secret policy selects only remote clusters; on
+`local-cluster`, CloudNativePG owns the generated secrets directly. The
+API-credential policy and its placement binding are temporarily commented out
+so they cannot replace the existing `maas-db-config` Secret while the database
+is still being validated.
+
+While the API-credential policy is disabled, syncing this app does not create
+or replace the `maas-db-config` Secret in `redhat-ai-gateway-infra`. If an
+older PostgreSQL instance is already in use, export and restore its data into
+the new primary before re-enabling the `maas-api` connection.
+
+## Validation
+
+After syncing the generated Applications, verify their status:
+
+```sh
+kubectl get applications.argoproj.io -n openshift-gitops
+kubectl get clusters.postgresql.cnpg.io -n maas-db
+kubectl get policies.policy.open-cluster-management.io -n maas-db
+```
+
+On a remote cluster, confirm streaming replication:
+
+```sh
+kubectl get cluster maas-read -n maas-db -o jsonpath='{.status.phase}{"\n"}'
+```
+
+The phase should be `Cluster in healthy state`. Backups and point-in-time
+recovery are not configured by this app and should be added before using the
+database for production data.
+
+After the writable primary and every read replica are healthy, validate
+connectivity from the database namespace. Then re-enable the
+`maas-db-api-credentials` Policy and PlacementBinding and sync the hub
+Application again to create or update `maas-db-config`.

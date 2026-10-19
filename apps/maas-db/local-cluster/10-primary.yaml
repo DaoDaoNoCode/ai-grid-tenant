@@ -1,0 +1,26 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: maas-db
+  namespace: maas-db
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  instances: 3
+  bootstrap:
+    initdb:
+      database: maas
+      owner: maas_api
+  storage:
+    size: 20Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: preferred
