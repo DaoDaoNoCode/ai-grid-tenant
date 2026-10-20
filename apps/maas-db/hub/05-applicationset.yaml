@@ -27,6 +27,9 @@ spec:
         server: '{{.server}}'
         namespace: maas-db
       syncPolicy:
+        automated:
+          prune: false
+          selfHeal: true
         retry:
           limit: 20
           backoff:

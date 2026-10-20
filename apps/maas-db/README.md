@@ -5,9 +5,10 @@ runs a three-instance writable cluster on `local-cluster`, and an ACM-generated
 Argo CD Application defines a one-instance read-only replica for every other
 registered managed cluster.
 
-The first rollout is intentionally manual and non-pruning. Sync `maas-db`,
-review the generated Applications, then sync each generated Application. After
-the database is validated, automated sync can be enabled in Git.
+Generated Applications sync automatically and self-heal configuration drift,
+but do not prune resources that are removed from Git. This keeps the initial
+database rollout GitOps-managed without exposing existing database resources to
+automated deletion.
 
 ## Topology
 
@@ -38,8 +39,8 @@ maas-read-ro.maas-db.svc.cluster.local:5432
 
 The app depends on the existing ACM GitOps integration that creates Argo CD
 cluster Secrets with the `apps.open-cluster-management.io/acm-cluster: "true"`
-label. After pushing the app, sync `maas-db` in Argo CD. The ApplicationSet
-creates:
+label. After pushing the app, Argo CD syncs `maas-db` automatically. The
+ApplicationSet creates:
 
 - `maas-db-local-cluster` for the writable primary.
 - One `maas-db-<cluster-name>` Application for each remote managed cluster.
@@ -57,7 +58,7 @@ the new primary before re-enabling the `maas-api` connection.
 
 ## Validation
 
-After syncing the generated Applications, verify their status:
+After the generated Applications sync, verify their status:
 
 ```sh
 kubectl get applications.argoproj.io -n openshift-gitops
