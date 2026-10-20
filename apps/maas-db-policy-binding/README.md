@@ -1,6 +1,6 @@
-# MaaS database policy unblock
+# MaaS database policy binding
 
-This Application creates a second `PlacementBinding` for the existing
+This Application creates a temporary `PlacementBinding` for the existing
 `maas-db-replication-secrets` Policy. It exists to let an already-running Argo CD
 sync operation finish when the Policy was created before its original binding.
 

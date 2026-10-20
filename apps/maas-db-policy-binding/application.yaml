@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: maas-db-policy-unblock
+  name: maas-db-policy-binding
   namespace: openshift-gitops
 spec:
   project: default
   source:
     repoURL: https://github.com/kahowell/ai-grid-tenant.git
     targetRevision: HEAD
-    path: apps/maas-db-policy-unblock/manifests
+    path: apps/maas-db-policy-binding/manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: maas-db
