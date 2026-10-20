@@ -54,7 +54,7 @@ spec:
                 metadata:
                   name: {{"{{"}} .metadata.name }}
                   labels:
-                    submariner.io/gateway: ""
+                    submariner.io/gateway: "true"
             {{"{{"}}- end }}
 ---
 apiVersion: policy.open-cluster-management.io/v1
