@@ -16,6 +16,9 @@ The `submariner-gateway-nodes` policy is distributed to every cluster in the
 global cluster set. On each cluster, it discovers Nodes whose only role is
 `worker` and enforces the `submariner.io/gateway` label. New and replacement
 worker Nodes are therefore labeled without cluster-specific Node names in Git.
+Submariner is configured for two gateways because cross-cluster connectivity
+is required by the shared database and model-serving topology. Each managed
+cluster therefore needs at least two pure worker Nodes.
 
 ### Adding or removing an admin
 
