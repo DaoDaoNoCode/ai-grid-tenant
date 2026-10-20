@@ -5,6 +5,24 @@ set -e
 oc apply -f bootstrap/namespace.yaml
 oc apply -f bootstrap/gitops-operator-group.yaml
 oc apply -f bootstrap/openshift-gitops-sub.yaml
+
+echo "Waiting for OpenShift GitOps CRDs..."
+wait_for_crd() {
+  local crd="$1"
+  for _ in $(seq 1 120); do
+    if oc get "customresourcedefinitions.apiextensions.k8s.io/${crd}" >/dev/null 2>&1; then
+      oc wait --for=condition=Established "customresourcedefinitions.apiextensions.k8s.io/${crd}" --timeout=1m
+      return 0
+    fi
+    sleep 5
+  done
+  echo "ERROR: timed out waiting for CRD ${crd}." >&2
+  return 1
+}
+
+wait_for_crd applications.argoproj.io
+wait_for_crd applicationsets.argoproj.io
+
 oc apply -f bootstrap/applicationset.yaml
 oc apply -f bootstrap/openshift-gitops-admin.yaml
 oc patch consoles.operator.openshift.io cluster --patch '{ "spec": { "plugins": ["gitops-plugin"] } }' --type=merge

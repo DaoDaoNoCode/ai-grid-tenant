@@ -13,6 +13,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: maas-db
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
     retry:
       limit: 20
       backoff:
