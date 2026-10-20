@@ -1,8 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: submariner-gateway-nodes
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+---
 apiVersion: cluster.open-cluster-management.io/v1beta2
 kind: ManagedClusterSetBinding
 metadata:
-  name: submariner-gateway-nodes
-  namespace: openshift-gitops
+  name: global
+  namespace: submariner-gateway-nodes
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
@@ -12,7 +19,7 @@ apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
   name: submariner-gateway-nodes
-  namespace: openshift-gitops
+  namespace: submariner-gateway-nodes
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
@@ -23,7 +30,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: submariner-gateway-nodes
-  namespace: openshift-gitops
+  namespace: submariner-gateway-nodes
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
@@ -54,7 +61,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
   name: submariner-gateway-nodes
-  namespace: openshift-gitops
+  namespace: submariner-gateway-nodes
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 placementRef:
