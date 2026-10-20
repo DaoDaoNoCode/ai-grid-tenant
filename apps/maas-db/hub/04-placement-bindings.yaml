@@ -4,7 +4,10 @@ metadata:
   name: maas-db-replication-secrets
   namespace: maas-db
   annotations:
-    argocd.argoproj.io/sync-wave: "4"
+    # TODO(maas-db): Split replication-secret distribution into an Application
+    # gated on CloudNativePG primary readiness, then move this binding after
+    # the generated database Applications.
+    argocd.argoproj.io/sync-wave: "3"
 placementRef:
   apiGroup: cluster.open-cluster-management.io
   kind: Placement
