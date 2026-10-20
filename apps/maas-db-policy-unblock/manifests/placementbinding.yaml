@@ -3,13 +3,12 @@ kind: PlacementBinding
 metadata:
   name: maas-db-replication-secrets-unblock
   namespace: maas-db
-spec:
-  placementRef:
-    apiGroup: cluster.open-cluster-management.io
-    kind: Placement
-    name: maas-db-remote-clusters
-    namespace: maas-db
-  subjects:
-    - apiGroup: policy.open-cluster-management.io
-      kind: Policy
-      name: maas-db-replication-secrets
+placementRef:
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+  name: maas-db-remote-clusters
+  namespace: maas-db
+subjects:
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: maas-db-replication-secrets
