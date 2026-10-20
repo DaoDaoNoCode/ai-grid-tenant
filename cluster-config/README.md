@@ -10,6 +10,13 @@ Grants `cluster-admin` to a Git-managed list of users through per-user
 `ClusterRoleBinding` objects (`cluster-admin-<user>`), managed by the
 `cluster-admins` Argo CD Application.
 
+## Submariner gateway nodes
+
+The `submariner-gateway-nodes` policy is distributed to every cluster in the
+global cluster set. On each cluster, it discovers Nodes whose only role is
+`worker` and enforces the `submariner.io/gateway` label. New and replacement
+worker Nodes are therefore labeled without cluster-specific Node names in Git.
+
 ### Adding or removing an admin
 
 Edit [`values.yaml`](values.yaml) and commit. The Application syncs
