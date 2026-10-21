@@ -12,7 +12,6 @@ placementRef:
   apiGroup: cluster.open-cluster-management.io
   kind: Placement
   name: maas-db-remote-clusters
-  namespace: maas-db
 subjects:
   - apiGroup: policy.open-cluster-management.io
     kind: Policy
