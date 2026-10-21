@@ -17,22 +17,19 @@ subjects:
     kind: Policy
     name: maas-db-replication-secrets
 ---
-# TODO(DB readiness): Re-enable together with maas-db-api-credentials only
-# after the writable primary and all read replicas pass validation.
-#
-# apiVersion: policy.open-cluster-management.io/v1
-# kind: PlacementBinding
-# metadata:
-#   name: maas-db-api-credentials
-#   namespace: maas-db
-#   annotations:
-#     argocd.argoproj.io/sync-wave: "4"
-# placementRef:
-#   apiGroup: cluster.open-cluster-management.io
-#   kind: Placement
-#   name: maas-db-clusters
-#   namespace: maas-db
-# subjects:
-#   - apiGroup: policy.open-cluster-management.io
-#     kind: Policy
-#     name: maas-db-api-credentials
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: maas-db-api-credentials
+  namespace: maas-db
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+placementRef:
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+  name: maas-db-clusters
+  namespace: maas-db
+subjects:
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: maas-db-api-credentials

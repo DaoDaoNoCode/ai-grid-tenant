@@ -47,14 +47,13 @@ ApplicationSet creates:
 
 The replication-secret policy selects only remote clusters; on
 `local-cluster`, CloudNativePG owns the generated secrets directly. The
-API-credential policy and its placement binding are temporarily commented out
-so they cannot replace the existing `maas-db-config` Secret while the database
-is still being validated.
+API-credential policy runs on all clusters and creates or updates the
+`maas-db-config` Secret expected by `maas-api`.
 
-While the API-credential policy is disabled, syncing this app does not create
-or replace the `maas-db-config` Secret in `redhat-ai-gateway-infra`. If an
-older PostgreSQL instance is already in use, export and restore its data into
-the new primary before re-enabling the `maas-api` connection.
+Keep the API-credential policy enabled only after the writable primary and
+local read endpoint have passed validation. If an older PostgreSQL instance is
+already in use, export and restore its data into the new primary before
+syncing this policy.
 
 ## Validation
 
@@ -77,6 +76,6 @@ recovery are not configured by this app and should be added before using the
 database for production data.
 
 After the writable primary and every read replica are healthy, validate
-connectivity from the database namespace. Then re-enable the
-`maas-db-api-credentials` Policy and PlacementBinding and sync the hub
-Application again to create or update `maas-db-config`.
+connectivity from the database namespace. The `maas-db-api-credentials` Policy
+and PlacementBinding can then remain enabled to create or update
+`maas-db-config` through GitOps.
