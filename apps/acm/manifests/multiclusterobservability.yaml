@@ -12,6 +12,7 @@ spec:
     metricObjectStorage:
       name: thanos-object-storage
       key: thanos.yaml
+    compactStorageSize: 101Gi
   advanced:
     retentionConfig:
       retentionResolutionRaw: 7d
