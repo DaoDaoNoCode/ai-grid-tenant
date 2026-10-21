@@ -4,6 +4,9 @@ metadata:
   name: submariner
   namespace: local-cluster
   annotations:
-    argocd.argoproj.io/sync-wave: "4"
+    # MultiClusterObservability installs the Cluster Observability Operator
+    # and its ScrapeConfig CRD. Keep this add-on behind it so a temporarily
+    # degraded Submariner deployment cannot block observability setup.
+    argocd.argoproj.io/sync-wave: "6"
 spec:
   installNamespace: submariner-operator
