@@ -76,7 +76,7 @@ spec:
                 echo "config:"
                 echo "  bucket: ${BUCKET_NAME}"
                 echo "  endpoint: ${ENDPOINT}"
-                echo "  insecure: true"
+                echo "  insecure: false"
                 echo "  access_key: ${AWS_ACCESS_KEY_ID}"
                 echo "  secret_key: ${AWS_SECRET_ACCESS_KEY}"
               } > "${THANOS_YAML}"

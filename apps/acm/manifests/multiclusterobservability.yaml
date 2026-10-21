@@ -14,7 +14,7 @@ spec:
       key: thanos.yaml
   advanced:
     retentionConfig:
-      retentionResolutionRaw: 24h
+      retentionResolutionRaw: 7d
       retentionResolution5m: 7d
       retentionResolution1h: 14d
     # Default sts size was 6, making node drain challenging
