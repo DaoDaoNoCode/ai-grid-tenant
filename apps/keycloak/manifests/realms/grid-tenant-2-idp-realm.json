@@ -1,0 +1,94 @@
+{
+  "realm": "grid-tenant-2-idp",
+  "keycloakVersion": "26.8.0",
+  "accessTokenLifespan": 21600,
+  "ssoSessionIdle": 21600,
+  "enabled": true,
+  "loginWithEmailAllowed": true,
+  "clients": [
+    {
+      "clientId": "saas-broker",
+      "name": "SaaS broker for Grid Tenant 2",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${GRID_TENANT_2_BROKER_CLIENT_SECRET}",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "${KEYCLOAK_PUBLIC_URL}/realms/saas/broker/grid-tenant-2/endpoint"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "${KEYCLOAK_PUBLIC_URL}/realms/saas/broker/grid-tenant-2/endpoint/logout_response"
+      },
+      "protocolMappers": [
+        {
+          "name": "MaaS tenant groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "claim.name": "groups",
+            "full.path": "false",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "access.token.claim": "false"
+          }
+        },
+        {
+          "name": "MaaS organization transport",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "maas_orgs_json",
+            "claim.name": "https://redhat\\.com/maas/orgs",
+            "jsonType.label": "String",
+            "multivalued": "false",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "access.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "id": "b5919e8a-046d-47e7-8a2c-f30f5ff12002",
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "config-pieces-count": ["1"],
+          "config-piece-0": ["{\"unmanagedAttributePolicy\":\"ADMIN_EDIT\"}"]
+        }
+      }
+    ]
+  },
+  "groups": [
+    { "name": "grid-tenant-2:ai-grid-users" }
+  ],
+  "users": [
+    {
+      "username": "bob",
+      "email": "bob@grid-tenant-2.test",
+      "emailVerified": true,
+      "enabled": true,
+      "groups": [
+        "/grid-tenant-2:ai-grid-users"
+      ],
+      "attributes": {
+        "maas_orgs_json": [
+          "[{\"tenant_id\":\"grid-tenant-2\",\"roles\":[]}]"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${GRID_TENANT_2_TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
