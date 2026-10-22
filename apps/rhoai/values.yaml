@@ -69,11 +69,7 @@ components:
   aigateway:
     dsc:
       aiGrid:
-        # Parked while the grid operator's configuration is reworked. The ACM
-        # site policy and the AI Gateway operator both assert five env keys on
-        # the grid-operator Deployment, and the force-apply loop rewrote it 24
-        # times a minute, so the operator never reached ready.
-        managementState: Removed
+        managementState: Managed
     modelsAsAService:
       gateway:
         spec:
