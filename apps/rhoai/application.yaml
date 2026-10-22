@@ -1,45 +1,30 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rhai-on-openshift
+  # Dedicated GitOps app for the RHOAI ApplicationSet. It is discovered
+  # automatically by the bootstrap ApplicationSet.
+  name: rhoai
   namespace: openshift-gitops
 spec:
   project: default
-  sources:
-    - repoURL: https://github.com/opendatahub-io/odh-gitops.git
-      # TODO: revert to main once the maasConsumerPortal change merges upstream
-      targetRevision: ai-grid
-      path: charts/rhai-on-openshift-chart
-      helm:
-        releaseName: rhai-on-openshift
-        valueFiles:
-          - $values/apps/rhoai/values.yaml
-    - repoURL: https://github.com/kahowell/ai-grid-tenant.git
-      targetRevision: HEAD
-      ref: values
-    # Nightly CatalogSource (image ref managed in apps/rhoai/nightly.yaml)
-    - repoURL: https://github.com/kahowell/ai-grid-tenant.git
-      targetRevision: HEAD
-      path: apps/rhoai/catalog
-      helm:
-        releaseName: rhoai-nightly-catalog
-        valueFiles:
-          - $values/apps/rhoai/nightly.yaml
+  source:
+    repoURL: https://github.com/kahowell/ai-grid-tenant.git
+    targetRevision: HEAD
+    path: apps/rhoai/hub
   destination:
     server: https://kubernetes.default.svc
-    namespace: odh-gitops
-  ignoreDifferences:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: maas-default-gateway
-      namespace: openshift-ingress
-      jsonPointers:
-        - /spec
+    namespace: openshift-gitops
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      refresh: true
+      limit: 20
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 30m
     syncOptions:
       - CreateNamespace=true
       - SkipDryRunOnMissingResource=true
-      - RespectIgnoreDifferences=true

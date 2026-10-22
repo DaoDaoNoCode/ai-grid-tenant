@@ -1,0 +1,11 @@
+{{- if not (eq (include "grid-enrollment-site.isHub" .) "true") }}
+apiVersion: grid.praxis.fast/v1alpha1
+kind: SiteInvite
+metadata:
+  name: {{ include "grid-enrollment-site.clusterName" . }}
+spec:
+  siteName: {{ include "grid-enrollment-site.siteName" . }}
+  jurisdictions:
+    {{- toYaml .Values.inviteJurisdictions | nindent 4 }}
+  lifetime: {{ .Values.inviteLifetime }}
+{{- end }}

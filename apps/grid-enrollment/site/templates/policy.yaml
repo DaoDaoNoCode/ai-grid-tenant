@@ -1,0 +1,391 @@
+{{- $siteName := include "grid-enrollment-site.siteName" . }}
+{{- $clusterName := include "grid-enrollment-site.clusterName" . }}
+{{- $slug := include "grid-enrollment-site.slug" . }}
+{{- $gatewayName := include "grid-enrollment-site.gatewayName" . }}
+{{- $swimServiceName := include "grid-enrollment-site.swimServiceName" . }}
+{{- $signalsServiceName := include "grid-enrollment-site.signalsServiceName" . }}
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: grid-site-{{ $slug }}
+  namespace: openshift-gitops
+spec:
+  clusterSets:
+    - global
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - key: name
+              operator: In
+              values:
+                - {{ $clusterName }}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: grid-site-{{ $slug }}
+  namespace: openshift-gitops
+placementRef:
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+  name: grid-site-{{ $slug }}
+subjects:
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: grid-site-{{ $slug }}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: grid-site-{{ $slug }}
+  namespace: openshift-gitops
+  annotations:
+    policy.open-cluster-management.io/standards: AI Grid
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    {{- if not (eq (include "grid-enrollment-site.isHub" .) "true") }}
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: grid-site-secrets-{{ $slug }}
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: grid-invite-{{ $siteName }}
+                  namespace: {{ .Values.gridNamespace }}
+                type: Opaque
+                data:
+                  token: '{{ printf "{{hub fromSecret %q %q \"token\" hub}}" .Values.inviteNamespace (printf "grid-invite-%s" $siteName) }}'
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: grid-ca-bundle
+                  namespace: {{ .Values.gridNamespace }}
+                type: Opaque
+                data:
+                  ca.crt: '{{ printf "{{hub fromSecret %q %q \"ca.crt\" hub}}" .Values.enrollmentNamespace "grid-ca-bundle" }}'
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: grid-swim-key
+                  namespace: {{ .Values.gridNamespace }}
+                type: Opaque
+                data:
+                  key: '{{ printf "{{hub fromSecret %q %q \"key\" hub}}" .Values.enrollmentNamespace "grid-swim-key" }}'
+    {{- end }}
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: grid-site-runtime-{{ $slug }}
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates-raw: |
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: grid-backend-ca
+                  namespace: {{ .Values.gridNamespace }}
+                type: Opaque
+                data:
+                  ca.crt: '{{ "{{ fromConfigMap \"redhat-ai-grid\" \"openshift-service-ca.crt\" \"service-ca.crt\" | base64enc }}" }}'
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: grid-site-runtime
+                  namespace: {{ .Values.gridNamespace }}
+                data:
+                  siteName: {{ $siteName | quote }}
+                  gatewayService: {{ $gatewayName | quote }}
+                  swimService: {{ $swimServiceName | quote }}
+                  signalsService: {{ $signalsServiceName | quote }}
+            {{ "{{ if lookup \"apps/v1\" \"Deployment\" \"redhat-ai-grid\" \"grid-operator\" }}" }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: apps/v1
+                kind: Deployment
+                metadata:
+                  name: grid-operator
+                  namespace: {{ .Values.gridNamespace }}
+                spec:
+                  template:
+                    spec:
+                      containers:
+                        - name: operator
+                          env:
+                            - name: GRID_CREATE_LOCAL_RECORDS
+                              value: "false"
+                            - name: GRID_GATEWAY_ADDRESS
+                              value: {{ printf "%s.%s.svc.clusterset.local:8080" $gatewayName .Values.gridNamespace | quote }}
+                            - name: GRID_GATEWAY_DISCOVERY_ENABLED
+                              value: "false"
+                            - name: GRID_GATEWAY_NAMESPACE
+                              value: {{ .Values.gridNamespace | quote }}
+                            - name: GRID_GATEWAY_PORT
+                              value: "8080"
+                            - name: GRID_GATEWAY_SERVICE_NAME
+                              value: {{ $gatewayName | quote }}
+                            - name: GRID_NETWORK
+                              value: {{ .Values.network | quote }}
+                            - name: GRID_PEER_TRUST
+                              value: spiffe
+                            - name: GRID_ROTATION_ENABLED
+                              value: "true"
+                            - name: GRID_SIGNAL_TRANSPORT
+                              value: poll
+                            - name: GRID_SIGNALS_ADVERTISE_ADDR
+                              value: {{ printf "%s.%s.svc.clusterset.local:9091" $signalsServiceName .Values.gridNamespace | quote }}
+                            - name: GRID_SIGNALS_LOCAL_ADDR
+                              value: {{ printf "%s.%s.svc.clusterset.local:9091" $signalsServiceName .Values.gridNamespace | quote }}
+                            - name: GRID_SIGNALS_SERVICE_NAME
+                              value: {{ $signalsServiceName | quote }}
+                            - name: GRID_SWIM_ADVERTISE_ADDR
+                              value: {{ printf "%s.%s.svc.clusterset.local:7946" $swimServiceName .Values.gridNamespace | quote }}
+                            - name: GRID_SWIM_SEEDS
+                              value: grid-swim-local-cluster.redhat-ai-grid.svc.clusterset.local:7946
+                            - name: GRID_SWIM_SITE_NAME
+                              value: {{ $siteName | quote }}
+                            {{- if eq (include "grid-enrollment-site.isHub" .) "true" }}
+                            - name: GRID_ENROLL_ENABLED
+                              value: "false"
+                            - name: GRID_ENROLL_URL
+                              value: {{ .Values.enrollmentUrl | quote }}
+                            - name: GRID_ENROLL_IDENTITY_SECRET
+                              value: grid-site-identity
+                            - name: GRID_ENROLL_CA_SECRET
+                              value: grid-ca
+                            {{- else }}
+                            - name: GRID_ENROLL_ENABLED
+                              value: "true"
+                            - name: GRID_ENROLL_URL
+                              value: {{ .Values.enrollmentUrl | quote }}
+                            - name: GRID_ENROLL_SITE_NAME
+                              value: {{ $siteName | quote }}
+                            - name: GRID_ENROLL_CA_FILE
+                              value: /etc/grid-enroll/pin/ca.crt
+                            - name: GRID_ENROLL_TOKEN_SECRET
+                              value: {{ printf "grid-invite-%s" $siteName | quote }}
+                            - name: GRID_ENROLL_TOKEN_SECRET_KEY
+                              value: token
+                            - name: GRID_ENROLL_IDENTITY_SECRET
+                              value: grid-site-identity
+                            - name: GRID_ENROLL_CA_SECRET
+                              value: grid-ca
+                            {{- end }}
+                          {{- if not (eq (include "grid-enrollment-site.isHub" .) "true") }}
+                          volumeMounts:
+                            - name: enroll-pin
+                              mountPath: /etc/grid-enroll/pin
+                              readOnly: true
+                          {{- end }}
+                      {{- if not (eq (include "grid-enrollment-site.isHub" .) "true") }}
+                      volumes:
+                        - name: enroll-pin
+                          secret:
+                            secretName: grid-ca-bundle
+                            items:
+                              - key: ca.crt
+                                path: ca.crt
+                      {{- end }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Service
+                metadata:
+                  name: {{ $swimServiceName }}
+                  namespace: {{ .Values.gridNamespace }}
+                spec:
+                  type: ClusterIP
+                  publishNotReadyAddresses: true
+                  ports:
+                    - name: swim-udp
+                      port: 7946
+                      targetPort: swim-udp
+                      protocol: UDP
+                  selector:
+                    app.kubernetes.io/name: grid-operator
+                    app.kubernetes.io/instance: grid-operator
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Service
+                metadata:
+                  name: {{ $signalsServiceName }}
+                  namespace: {{ .Values.gridNamespace }}
+                spec:
+                  type: ClusterIP
+                  ports:
+                    - name: signals
+                      port: 9091
+                      targetPort: signals
+                      protocol: TCP
+                  selector:
+                    app.kubernetes.io/name: grid-operator
+                    app.kubernetes.io/instance: grid-operator
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Service
+                metadata:
+                  name: grid-gateway
+                  namespace: {{ .Values.gridNamespace }}
+                spec:
+                  type: ExternalName
+                  externalName: {{ printf "%s.%s.svc.cluster.local" $gatewayName .Values.gridNamespace | quote }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: submariner.io/v1alpha1
+                kind: ServiceExport
+                metadata:
+                  name: {{ $swimServiceName }}
+                  namespace: {{ .Values.gridNamespace }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: submariner.io/v1alpha1
+                kind: ServiceExport
+                metadata:
+                  name: {{ $signalsServiceName }}
+                  namespace: {{ .Values.gridNamespace }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: submariner.io/v1alpha1
+                kind: ServiceExport
+                metadata:
+                  name: {{ $gatewayName }}
+                  namespace: {{ .Values.gridNamespace }}
+            {{- if eq (include "grid-enrollment-site.isHub" .) "true" }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: submariner.io/v1alpha1
+                kind: ServiceExport
+                metadata:
+                  name: grid-enrollment
+                  namespace: {{ .Values.enrollmentNamespace }}
+            {{- end }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  name: allow-grid-operator
+                  namespace: {{ .Values.gridNamespace }}
+                spec:
+                  podSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: grid-operator
+                      app.kubernetes.io/instance: grid-operator
+                  policyTypes:
+                    - Ingress
+                  ingress:
+                    - from:
+                        - podSelector: {}
+                        - ipBlock:
+                            cidr: {{ .Values.globalNetCIDR }}
+                      ports:
+                        - protocol: UDP
+                          port: 7946
+                        - protocol: TCP
+                          port: 9091
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  name: allow-grid-gateway
+                  namespace: {{ .Values.gridNamespace }}
+                spec:
+                  podSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: praxis-gateway
+                      app.kubernetes.io/instance: grid-gateway
+                  policyTypes:
+                    - Ingress
+                  ingress:
+                    - from:
+                        - podSelector: {}
+                        - namespaceSelector:
+                            matchLabels:
+                              kubernetes.io/metadata.name: models-as-a-service
+                        - namespaceSelector:
+                            matchLabels:
+                              kubernetes.io/metadata.name: redhat-ai-gateway-infra
+                        - ipBlock:
+                            cidr: {{ .Values.globalNetCIDR }}
+                      ports:
+                        - protocol: TCP
+                          port: 8080
+            {{ "{{ end }}" }}
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: grid-site-routing-{{ $slug }}
+        spec:
+          remediationAction: enforce
+          severity: medium
+          object-templates-raw: |
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: grid-site-routing
+                  namespace: {{ .Values.gridNamespace }}
+                data:
+                  network: {{ .Values.network | quote }}
+                  siteName: {{ $siteName | quote }}
+            {{ "{{ if lookup \"grid.praxis.fast/v1alpha1\" \"GridNetwork\" \"\" \"grid\" }}" }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: grid.praxis.fast/v1alpha1
+                kind: GridNetwork
+                metadata:
+                  name: {{ .Values.network }}
+                spec:
+                  consumerGateways:
+                    - name: {{ $gatewayName }}
+                      namespace: {{ .Values.gridNamespace }}
+                      praxisConfig:
+                        deriveTopology:
+                          fromProviders:
+                            {{ "{{ range $site := (lookup \"grid.praxis.fast/v1alpha1\" \"GridSite\" \"\" \"\").items }}" }}
+                            {{ "{{ if and $site.spec.gridNetworkRef (eq $site.spec.gridNetworkRef \"grid\") }}" }}
+                            {{ "{{ $id := $site.metadata.name }}" }}
+                            {{ "{{ if and $site.metadata.annotations (index $site.metadata.annotations \"grid.praxis.fast/site-id\") }}" }}
+                            {{ "{{ $id = index $site.metadata.annotations \"grid.praxis.fast/site-id\" }}" }}
+                            {{ "{{ end }}" }}
+                            - {{ "{{ $id }}" }}
+                            {{ "{{ end }}" }}
+                            {{ "{{ end }}" }}
+            {{ "{{ range $provider := (lookup \"grid.praxis.fast/v1alpha1\" \"InferenceProvider\" \"\" \"\").items }}" }}
+            {{ "{{ if and $provider.metadata.labels (eq (index $provider.metadata.labels \"opendatahub.io/managed\") \"true\") $provider.spec.gridNetworkRef (eq $provider.spec.gridNetworkRef \"grid\") }}" }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: grid.praxis.fast/v1alpha1
+                kind: InferenceProvider
+                metadata:
+                  name: {{ "{{ $provider.metadata.name }}" }}
+                spec:
+                  clusterName: {{ $siteName | quote }}
+            {{ "{{ end }}" }}
+            {{ "{{ end }}" }}
+            {{ "{{ end }}" }}

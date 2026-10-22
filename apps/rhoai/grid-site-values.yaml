@@ -1,0 +1,62 @@
+gridNetwork:
+  name: grid
+  gridId: ai-grid-tenant
+  autoDiscoverSites: true
+  seeds:
+    - grid-swim-local-cluster.redhat-ai-grid.svc.clusterset.local:7946
+  admissionPolicy:
+    mode: stabilized
+    pressure:
+      enterThreshold: 0.85
+      exitThreshold: 0.70
+      failureThreshold: 2
+      successThreshold: 3
+      minimumStateDuration: 10s
+      recoveryHoldDown: 30s
+    missingMetrics: existingOnly
+  selectionPolicy:
+    mode: roundRobin
+  signalTransport:
+    mode: poll
+  peerTrust:
+    mode: spiffe
+  tls:
+    siteSecretRef:
+      name: grid-site-identity
+      namespace: redhat-ai-grid
+    caSecretRef:
+      name: grid-ca
+      namespace: redhat-ai-grid
+    swimKeySecretRef:
+      name: grid-swim-key
+      namespace: redhat-ai-grid
+  consumerGateways:
+    - name: grid-gateway
+      namespace: redhat-ai-grid
+      siteName: local-cluster
+      praxisConfig:
+        generate: true
+        configMapName: praxis-consumer-config
+        enableProjectedCredentials: true
+        supportsProjectedCredentials: true
+        credentialMountPath: /run/secrets/grid-credentials
+        tlsCertMountPath: /etc/praxis/tls
+        deriveTopology:
+          fromProviders: []
+          transport:
+            mode: tls
+            caSecretRef:
+              name: grid-backend-ca
+              key: ca.crt
+        mountReconciliation:
+          enabled: true
+          deploymentName: grid-gateway
+          containerName: praxis
+
+gridSite:
+  name: local-cluster
+  gatewayEndpoint:
+    address: grid-gw-local-cluster.redhat-ai-grid.svc.clusterset.local:8080
+    tls:
+      mode: Mutual
+      serverName: grid-gw-local-cluster.redhat-ai-grid.svc.clusterset.local

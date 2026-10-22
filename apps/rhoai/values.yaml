@@ -36,18 +36,18 @@ components:
   dashboard:
     dsc:
       managementState: Managed
-      maasConsumerPortal:
-        managementState: Managed
+      # TODO: Enable consumer portal once this is in: https://github.com/opendatahub-io/odh-gitops/pull/203
+      # maasConsumerPortal:
+      #  managementState: Managed
   kserve:
     gateway:
       annotations:
         grid.opendatahub.io/serving: >-
           {
-            "networkName": "grid-local",
-            "namespace": "grid-system",
+            "networkName": "grid",
+            "namespace": "redhat-ai-grid",
             "serviceAccount": "grid-model-client",
-            "tokenSecret": "grid-model-client-token",
-            "siteLabels": "grid.praxis.fast/provider-site=local"
+            "tokenSecret": "grid-model-client-token"
           }
       spec:
         listeners:
@@ -61,12 +61,15 @@ components:
                 from: Selector
                 selector:
                   matchExpressions:
-                  - key: kubernetes.io/metadata.name
-                    operator: In
-                    values:
-                    - openshift-ingress
-                    - ai-grid-internal-models
+                    - key: kubernetes.io/metadata.name
+                      operator: In
+                      values:
+                        - openshift-ingress
+                        - ai-grid-internal-models
   aigateway:
+    dsc:
+      aiGrid:
+        managementState: Managed
     modelsAsAService:
       gateway:
         spec:
@@ -81,10 +84,16 @@ components:
                   from: Selector
                   selector:
                     matchExpressions:
-                    - key: kubernetes.io/metadata.name
-                      operator: In
-                      values:
-                      - openshift-ingress
-                      # MaaS models in a Grid are represented by ExternalModel resources pointing to the Grid GW.
-                      - models-as-a-service
-                      - redhat-ai-gateway-infra
+                      - key: kubernetes.io/metadata.name
+                        operator: In
+                        values:
+                          - openshift-ingress
+                          # MaaS models in a Grid are represented by ExternalModel resources pointing to the Grid GW.
+                          - models-as-a-service
+                          - redhat-ai-gateway-infra
+
+grid-enrollment:
+  enabled: false
+
+praxis-gateway:
+  enabled: false

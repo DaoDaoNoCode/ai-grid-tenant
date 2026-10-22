@@ -1,0 +1,139 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  # Generates one Application for every cluster secret created by the
+  # acm-models GitOpsCluster resource, including local-cluster.
+  name: rhoai
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            apps.open-cluster-management.io/acm-cluster: "true"
+  template:
+    metadata:
+      name: 'rhoai-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}'
+      namespace: openshift-gitops
+    spec:
+      project: default
+      sources:
+        - repoURL: https://github.com/kahowell/ai-grid-tenant.git
+          targetRevision: HEAD
+          ref: values
+        - repoURL: https://github.com/opendatahub-io/odh-gitops.git
+          targetRevision: main
+          path: charts/rhai-on-openshift-chart
+          helm:
+            releaseName: rhai-on-openshift
+            valueFiles:
+              - $values/apps/rhoai/values.yaml
+        - repoURL: https://github.com/kahowell/ai-grid-tenant.git
+          targetRevision: HEAD
+          path: apps/rhoai/manifests
+        # v0.2.2 is pinned because odh-gitops vendors only the older 0.2.0
+        # runtime charts and does not vendor grid-site at all.
+        - repoURL: https://github.com/praxis-proxy/grid.git
+          targetRevision: v0.2.2
+          path: charts/grid-site
+          helm:
+            releaseName: grid-site
+            valueFiles:
+              - $values/apps/rhoai/grid-site-values.yaml
+            parameters:
+              - name: gridNetwork.consumerGateways[0].name
+                value: 'grid-gw-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}'
+              - name: gridNetwork.consumerGateways[0].siteName
+                value: '{{.name}}'
+              - name: gridNetwork.consumerGateways[0].praxisConfig.mountReconciliation.deploymentName
+                value: 'grid-gw-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}'
+              - name: gridSite.name
+                value: '{{.name}}'
+              - name: gridSite.gatewayEndpoint.address
+                value: 'grid-gw-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}.redhat-ai-grid.svc.clusterset.local:8080'
+              - name: gridSite.gatewayEndpoint.tls.serverName
+                value: 'grid-gw-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}.redhat-ai-grid.svc.clusterset.local'
+        # v0.2.2 is required for operator-generated gateway configuration and
+        # dynamic provider-derived topology.
+        - repoURL: https://github.com/praxis-proxy/grid.git
+          targetRevision: v0.2.2
+          path: charts/praxis-gateway
+          helm:
+            releaseName: grid-gateway
+            valueFiles:
+              - $values/apps/rhoai/grid-gateway-values.yaml
+            parameters:
+              - name: fullnameOverride
+                value: 'grid-gw-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}'
+              - name: grid.networkName
+                value: grid
+              - name: grid.siteName
+                value: '{{.name}}'
+              - name: mountReconciliation.gatewayRef
+                value: 'grid-gw-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}'
+              - name: mountReconciliation.operator.namespace
+                value: redhat-ai-grid
+        - repoURL: https://github.com/kahowell/ai-grid-tenant.git
+          targetRevision: HEAD
+          path: apps/rhoai/catalog
+          helm:
+            releaseName: rhoai-nightly-catalog
+            valueFiles:
+              - $values/apps/rhoai/nightly.yaml
+      destination:
+        server: '{{.server}}'
+        namespace: redhat-ai-grid
+      ignoreDifferences:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: maas-default-gateway
+          namespace: openshift-ingress
+          jsonPointers:
+            - /spec
+        - group: ""
+          kind: Secret
+          name: grid-model-client-token
+          namespace: redhat-ai-grid
+          jsonPointers:
+            - /data
+            - /metadata/annotations
+        - group: ""
+          kind: ConfigMap
+          name: praxis-consumer-config
+          namespace: redhat-ai-grid
+          jsonPointers:
+            - /data
+        - group: grid.praxis.fast
+          kind: GridNetwork
+          name: grid
+          jsonPointers:
+            - /spec/consumerGateways/0/praxisConfig/deriveTopology/fromProviders
+        - group: apps
+          kind: Deployment
+          name: 'grid-gw-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}'
+          namespace: redhat-ai-grid
+          jsonPointers:
+            - /metadata/annotations
+            - /spec/template/metadata/annotations
+            - /spec/template/spec/volumes
+          jqPathExpressions:
+            - 'spec.template.spec.containers[?name=="praxis"].volumeMounts'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        retry:
+          refresh: true
+          limit: 20
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 30m
+        syncOptions:
+          - CreateNamespace=true
+          - SkipDryRunOnMissingResource=true
+          - RespectIgnoreDifferences=true

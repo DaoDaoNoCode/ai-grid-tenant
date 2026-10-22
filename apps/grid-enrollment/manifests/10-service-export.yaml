@@ -1,0 +1,7 @@
+apiVersion: submariner.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: grid-enrollment
+  namespace: grid-enrollment
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"

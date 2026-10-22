@@ -12,5 +12,5 @@ spec:
     secretRef:
       name: grid-maas-upstream
     type: apikey
-  endpoint: grid-gateway.grid-system.svc.cluster.local
+  endpoint: grid-gateway.redhat-ai-grid.svc.cluster.local
   provider: openai

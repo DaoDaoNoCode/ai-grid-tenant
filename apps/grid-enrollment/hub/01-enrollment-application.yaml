@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grid-enrollment-service
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/kahowell/ai-grid-tenant.git
+      targetRevision: HEAD
+      ref: values
+    - repoURL: https://github.com/kahowell/ai-grid-tenant.git
+      targetRevision: HEAD
+      path: apps/grid-enrollment/manifests
+    # v0.2.2 is pinned because the 0.2.0 chart vendored by odh-gitops lacks
+    # SiteInvite reconciliation and hardened invite Secret grants.
+    - repoURL: https://github.com/praxis-proxy/grid.git
+      targetRevision: v0.2.2
+      path: charts/grid-enrollment
+      helm:
+        releaseName: grid-enrollment
+        valueFiles:
+          - $values/apps/grid-enrollment/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: grid-enrollment
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      refresh: true
+      limit: 20
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 30m
+    syncOptions:
+      - CreateNamespace=true
+      - SkipDryRunOnMissingResource=true
