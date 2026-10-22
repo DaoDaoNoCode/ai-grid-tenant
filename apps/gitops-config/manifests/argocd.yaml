@@ -47,6 +47,78 @@ spec:
         hs.status = "Progressing"
         hs.message = obj.status.phase
         return hs
+    - group: postgresql.cnpg.io
+      kind: Database
+      check: |
+        hs = {}
+        if obj.status == nil or obj.status.applied == nil then
+          hs.status = "Progressing"
+          hs.message = "Waiting for CloudNativePG database status"
+          return hs
+        end
+        if obj.metadata.generation ~= nil and obj.status.observedGeneration ~= nil and obj.status.observedGeneration < obj.metadata.generation then
+          hs.status = "Progressing"
+          hs.message = "Waiting for the current CloudNativePG database generation"
+          return hs
+        end
+        if obj.status.applied then
+          hs.status = "Healthy"
+          hs.message = "CloudNativePG database reconciliation applied"
+          return hs
+        end
+        hs.status = "Degraded"
+        hs.message = obj.status.message or "CloudNativePG database reconciliation failed"
+        return hs
+    - group: postgresql.cnpg.io
+      kind: DatabaseRole
+      check: |
+        hs = {}
+        if obj.status == nil or obj.status.applied == nil then
+          hs.status = "Progressing"
+          hs.message = "Waiting for CloudNativePG database role status"
+          return hs
+        end
+        if obj.metadata.generation ~= nil and obj.status.observedGeneration ~= nil and obj.status.observedGeneration < obj.metadata.generation then
+          hs.status = "Progressing"
+          hs.message = "Waiting for the current CloudNativePG database role generation"
+          return hs
+        end
+        if obj.status.applied then
+          hs.status = "Healthy"
+          hs.message = "CloudNativePG database role reconciliation applied"
+          return hs
+        end
+        hs.status = "Degraded"
+        hs.message = obj.status.message or "CloudNativePG database role reconciliation failed"
+        return hs
+    - group: route.openshift.io
+      kind: Route
+      check: |
+        hs = {}
+        if obj.status == nil or obj.status.ingress == nil then
+          hs.status = "Progressing"
+          hs.message = "Waiting for OpenShift Route admission"
+          return hs
+        end
+        for _, ingress in ipairs(obj.status.ingress) do
+          local conditions = ingress.conditions or {}
+          for _, condition in ipairs(conditions) do
+            if condition.type == "Admitted" then
+              if condition.status == "True" then
+                hs.status = "Healthy"
+                hs.message = condition.message or "OpenShift Route admitted"
+                return hs
+              elseif condition.status == "False" then
+                hs.status = "Degraded"
+                hs.message = condition.message or "OpenShift Route admission failed"
+                return hs
+              end
+            end
+          end
+        end
+        hs.status = "Progressing"
+        hs.message = "Waiting for the OpenShift Route Admitted condition"
+        return hs
     - group: limitador.kuadrant.io
       kind: Limitador
       check: |
