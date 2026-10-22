@@ -32,6 +32,9 @@ spec:
             releaseName: rhai-on-openshift
             valueFiles:
               - $values/apps/rhoai/values.yaml
+            parameters:
+              - name: grid-enrollment.enabled
+                value: '{{ eq .name "local-cluster" | toString }}'
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           path: apps/rhoai/manifests
