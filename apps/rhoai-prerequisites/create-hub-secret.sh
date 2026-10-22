@@ -46,7 +46,7 @@ if ! kubectl "${kubectl_args[@]}" get namespace "$namespace" >/dev/null 2>&1; th
   kubectl "${kubectl_args[@]}" create namespace "$namespace"
 fi
 
-docker_config_json="$(jq -n '{auths: {"quay.io/rhoai": {auth: env.RHOAI_QUAY_PULL_SECRET}}}')"
+docker_config_json="$(jq -n '{auths: {"quay.io": {auth: env.RHOAI_QUAY_PULL_SECRET}}}')"
 docker_config_json_b64="$(printf '%s' "$docker_config_json" | base64 -w0)"
 
 kubectl "${kubectl_args[@]}" apply -f - <<EOF

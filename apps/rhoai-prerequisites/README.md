@@ -34,7 +34,8 @@ credentials into the hub-side source Secret before enabling this policy.
 ## Create the hub Secret
 
 Set `RHOAI_QUAY_PULL_SECRET` to the base64-encoded `username:password` value
-for `quay.io/rhoai`, then run:
+that can pull both the RHOAI catalog and operator-bundle repositories, then
+run:
 
 ```sh
 export HUB_CONTEXT='<hub-kubeconfig-context>'
