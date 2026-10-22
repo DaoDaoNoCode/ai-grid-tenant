@@ -51,6 +51,22 @@ components:
           }
       spec:
         listeners:
+          - name: http
+            port: 80
+            # hostname: <HOSTNAME> # Uncomment this line to use a specific hostname.
+            protocol: HTTP
+            allowedRoutes:
+              namespaces:
+                # The following is an example of how to restrict the namespaces to the interested ones.
+                from: Selector
+                selector:
+                  matchExpressions:
+                    - key: kubernetes.io/metadata.name
+                      operator: In
+                      values:
+                        - openshift-ingress
+                        - ai-grid-internal-models
+
           - name: https
             port: 443
             # hostname: <HOSTNAME> # Uncomment this line to use a specific hostname.
@@ -74,7 +90,7 @@ components:
       gateway:
         spec:
           listeners:
-            - name: https
+            - name: http
               port: 80
               # hostname: <HOSTNAME> # Uncomment this line to use a specific hostname.
               protocol: HTTP
