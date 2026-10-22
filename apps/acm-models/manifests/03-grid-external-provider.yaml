@@ -14,3 +14,7 @@ spec:
     type: apikey
   endpoint: grid-gateway.redhat-ai-grid.svc.cluster.local
   provider: openai
+  config:
+    # Verify the gateway's service-ca certificate. A path already mounted in the
+    # calling proxy; the controller never reads certificate bytes.
+    tls.caCertificates: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
