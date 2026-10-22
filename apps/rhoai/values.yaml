@@ -191,14 +191,42 @@ praxis-gateway:
     networkName: grid
     siteName: local-cluster
   praxisConfig:
-    source: operator
-    operator:
-      configMapName: praxis-consumer-config
+    source: render
+    render:
+      # MaaS authenticates the caller.
+      auth:
+        mode: none
+      backends:
+        # cluster must match candidates[].cluster in the serving config, and is
+        # generated from the source UID.
+        - cluster: grid-ai-grid-internal-models-fa5d29f44274630a4c1f0377cb458dfa16
+          endpoints:
+            - facebook-opt-125m-kserve-workload-svc.ai-grid-internal-models.svc.cluster.local.:8000
+          transport:
+            mode: tls
+            ca:
+              configMapName: openshift-service-ca.crt
+              key: service-ca.crt
+          # praxis refuses a name that resolves to a private address.
+          trustPrivate: true
+      # Renders grid_site_route over the operator's serving data.
+      gridServing:
+        enabled: true
+        networkName: grid
+        # Explicit: the default follows fullnameOverride.
+        gatewayRefName: grid-gateway
   gridIdentity:
     tlsSecretName: grid-site-identity
     caSecretName: grid-ca
     mountPath: /etc/praxis/tls
+  listenerTls:
+    secretName: grid-gateway-listener-tls
+  port:
+    containerPort: 8443
   service:
     enabled: true
     type: ClusterIP
-    port: 8080
+    # What inference.opendatahub.io/port already names.
+    port: 443
+    annotations:
+      service.beta.openshift.io/serving-cert-secret-name: grid-gateway-listener-tls
