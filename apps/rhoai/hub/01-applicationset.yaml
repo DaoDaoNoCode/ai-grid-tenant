@@ -53,6 +53,8 @@ spec:
                 value: 'grid-gw-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}'
               - name: gridSite.name
                 value: '{{.name}}'
+              - name: gridSite.providerSiteLabel
+                value: '{{.name}}'
               - name: gridSite.gatewayEndpoint.address
                 value: 'grid-gw-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}.redhat-ai-grid.svc.clusterset.local:8080'
               - name: gridSite.gatewayEndpoint.tls.serverName

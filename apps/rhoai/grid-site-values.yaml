@@ -55,6 +55,11 @@ gridNetwork:
 
 gridSite:
   name: local-cluster
+  # The operator reports LocalSiteDeclared=False until the GridSite carries this
+  # label, because providers select their site by label and match nothing
+  # without it. The chart defaults it to an empty string. Overridden per cluster
+  # by the rhoai ApplicationSet, like gridSite.name.
+  providerSiteLabel: local-cluster
   gatewayEndpoint:
     address: grid-gw-local-cluster.redhat-ai-grid.svc.clusterset.local:8080
     tls:
