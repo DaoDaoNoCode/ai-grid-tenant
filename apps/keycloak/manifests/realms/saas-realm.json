@@ -2,7 +2,7 @@
   "realm": "saas",
   "keycloakVersion": "26.8.0",
   "accessTokenLifespan": 21600,
-  "ssoSessionIdle": 21600,
+  "ssoSessionIdleTimeout": 21600,
   "enabled": true,
   "loginWithEmailAllowed": true,
   "organizationsEnabled": true,
