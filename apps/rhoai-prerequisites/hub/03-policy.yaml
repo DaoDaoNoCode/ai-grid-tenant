@@ -38,6 +38,7 @@ spec:
         spec:
           remediationAction: enforce
           severity: low
+          pruneObjectBehavior: DeleteAll
           object-templates:
             - complianceType: musthave
               objectDefinition:
