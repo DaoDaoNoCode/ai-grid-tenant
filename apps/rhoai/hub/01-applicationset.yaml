@@ -48,8 +48,12 @@ spec:
             releaseName: rhoai-nightly-catalog
             valueFiles:
               - $values/apps/rhoai/nightly.yaml
+      # The hub resolves to Argo's own in-cluster destination. Routing it back
+      # through the cluster-proxy applies as the ACM addon ServiceAccount, which
+      # the managed-cluster webhooks deny on redhat-* namespaces and on every
+      # NetworkPolicy. Argo's controller ServiceAccount is allowed both.
       destination:
-        server: '{{.server}}'
+        server: '{{ if eq .name "local-cluster" }}https://kubernetes.default.svc{{ else }}{{ .server }}{{ end }}'
         namespace: redhat-ai-grid
       ignoreDifferences:
         - group: ""
