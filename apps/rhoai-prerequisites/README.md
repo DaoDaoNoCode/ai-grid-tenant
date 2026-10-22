@@ -3,6 +3,7 @@
 This app distributes the RHOAI nightly registry prerequisites to every cluster
 in the reserved `global` ACM cluster set:
 
+- the protected `redhat-ai-grid` and `redhat-ods-operator` Namespaces;
 - the same `ImageContentSourcePolicy` used by the hub;
 - the `kube-system/additional-pull-secret` and
   `openshift-marketplace/rhoai-catalog-pull-secret` required to pull from

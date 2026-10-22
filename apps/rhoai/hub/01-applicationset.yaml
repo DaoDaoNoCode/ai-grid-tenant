@@ -46,11 +46,10 @@ spec:
         server: '{{.server}}'
         namespace: redhat-ai-grid
       ignoreDifferences:
-        # ROSA and OSD refuse any write to a Red Hat managed namespace, so Argo
-        # cannot reconcile the helm bookkeeping labels the chart puts on these
-        # two. Both already exist, created by the platform. Leaving their
-        # metadata unmanaged keeps the sync from failing on every attempt and
-        # stalling every later resource, including the catalog digest.
+        # ROSA and OSD refuse writes to Red Hat managed Namespaces. The
+        # prerequisite policy owns redhat-ods-operator and the platform owns
+        # openshift-operators-redhat; ignore only the chart's bookkeeping
+        # metadata so Argo never needs to patch either Namespace.
         - group: ""
           kind: Namespace
           name: redhat-ods-operator
@@ -109,6 +108,8 @@ spec:
             factor: 2
             maxDuration: 30m
         syncOptions:
-          - CreateNamespace=true
+          # The prerequisite policy owns Namespaces that OSD classifies as
+          # Red Hat managed; Argo must not compete to create them.
+          - CreateNamespace=false
           - SkipDryRunOnMissingResource=true
           - RespectIgnoreDifferences=true
