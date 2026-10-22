@@ -28,7 +28,7 @@ spec:
         # Pinned to a fork commit carrying operator.olm.createNamespace until
         # the change is available upstream. This lets ACM own protected
         # Namespaces while the chart still owns the OLM operator resources.
-        - repoURL: https://github.com/pierDypi/odh-gitops.git
+        - repoURL: https://github.com/pierDipi/odh-gitops.git
           targetRevision: c1be9382ef7da230d4fd3ba003d42e443804c81e
           path: charts/rhai-on-openshift-chart
           helm:
