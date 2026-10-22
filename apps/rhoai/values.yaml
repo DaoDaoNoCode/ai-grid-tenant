@@ -158,8 +158,11 @@ grid-enrollment:
     extraDnsNames:
       - grid-enrollment.redhat-ai-grid.svc.clusterset.local
   enrollment:
-    # inviteSecrets.namespace is unset: the chart creates that namespace, apart
-    # from the Grid CA key, only when no explicit value claims it.
+    # Named explicitly: the chart would derive redhat-ai-grid-invites, which
+    # matches ^redhat-.* and ROSA refuses to let Argo create it. Naming it means
+    # the chart does not create it either, so it comes from manifests/.
+    inviteSecrets:
+      namespace: grid-enrollment-invites
     authz: kube
     service:
       type: ClusterIP
