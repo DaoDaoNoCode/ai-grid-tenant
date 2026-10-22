@@ -59,27 +59,6 @@ spec:
           jsonPointers:
             - /data
             - /metadata/annotations
-        - group: ""
-          kind: ConfigMap
-          name: praxis-consumer-config
-          namespace: redhat-ai-grid
-          jsonPointers:
-            - /data
-        - group: grid.praxis.fast
-          kind: GridNetwork
-          name: grid
-          jsonPointers:
-            - /spec/consumerGateways/0/praxisConfig/deriveTopology/fromProviders
-        - group: apps
-          kind: Deployment
-          name: 'grid-gw-{{ .name | trunc 34 }}-{{ sha256sum .name | trunc 8 }}'
-          namespace: redhat-ai-grid
-          jsonPointers:
-            - /metadata/annotations
-            - /spec/template/metadata/annotations
-            - /spec/template/spec/volumes
-          jqPathExpressions:
-            - '.spec.template.spec.containers[] | select(.name == "praxis") | .volumeMounts'
       syncPolicy:
         automated:
           prune: true
