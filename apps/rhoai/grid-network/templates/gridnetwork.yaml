@@ -1,13 +1,9 @@
 {{- if not .Values.siteName }}
 {{- fail "siteName is required: the rhoai ApplicationSet sets it per cluster" }}
 {{- end }}
-# Declared because nothing generates consumerGateways, and the operator writes
-# serving data only per entry. signalTransport rides along: serving data is
-# written only in poll mode.
-#
-# swimKeySecretRef is deliberately absent. Poll mode does not gossip, and the
-# operator refuses to reconcile a declared ref it cannot resolve, which only the
-# hub can.
+# Nothing generates consumerGateways, and serving data is written per entry and
+# only in poll mode. swimKeySecretRef is absent on purpose: only the hub has it,
+# and a declared ref it cannot resolve fails the reconcile.
 apiVersion: grid.praxis.fast/v1alpha1
 kind: GridNetwork
 metadata:
