@@ -1,9 +1,0 @@
-apiVersion: cluster.open-cluster-management.io/v1beta2
-kind: ManagedClusterSetBinding
-metadata:
-  name: grid-enrollment-global
-  namespace: openshift-gitops
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
-spec:
-  clusterSet: global

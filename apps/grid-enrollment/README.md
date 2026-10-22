@@ -10,6 +10,8 @@ cluster's platform-owned Grid operator.
 When ACM admits a cluster into the `global` cluster set, `apps/acm-models` creates its
 Argo CD cluster secret. Both the Grid enrollment and RHOAI ApplicationSets then generate
 their per-cluster Applications automatically.
+`apps/acm-models` also owns the `global` ManagedClusterSetBinding in `openshift-gitops`;
+Grid enrollment depends on that binding instead of creating a duplicate.
 
 The enrollment service reconciles the new `SiteInvite` into a one-time token Secret. ACM
 copies that token, the Grid CA bundle, and the SWIM key to the new cluster, while the

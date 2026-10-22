@@ -121,7 +121,7 @@ spec:
             - /spec/template/metadata/annotations
             - /spec/template/spec/volumes
           jqPathExpressions:
-            - 'spec.template.spec.containers[?name=="praxis"].volumeMounts'
+            - '.spec.template.spec.containers[] | select(.name == "praxis") | .volumeMounts'
       syncPolicy:
         automated:
           prune: true
