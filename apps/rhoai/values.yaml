@@ -8,6 +8,8 @@ operator:
       # requires prerequisites distributed by apps/rhoai-prerequisites.
       source: rhoai-catalog-dev
       channel: stable-3.6
+      # ACM owns this Red Hat managed Namespace; OSD rejects Argo writes to it.
+      createNamespace: false
 # Workaround for https://redhat.atlassian.net/browse/RHOAIENG-99507:
 # RHACM's multicluster-observability-addon also installs COO with its own
 # OperatorGroup (named after the namespace), which conflicts with the chart's
@@ -16,6 +18,10 @@ operator:
 dependencies:
   clusterObservability:
     enabled: false
+  loki:
+    olm:
+      # The platform owns this Red Hat managed Namespace.
+      createNamespace: false
 services:
   monitoring:
     dsci:

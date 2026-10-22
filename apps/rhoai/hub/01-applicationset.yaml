@@ -25,8 +25,11 @@ spec:
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           ref: values
-        - repoURL: https://github.com/opendatahub-io/odh-gitops.git
-          targetRevision: main
+        # Pinned to a fork commit carrying operator.olm.createNamespace until
+        # the change is available upstream. This lets ACM own protected
+        # Namespaces while the chart still owns the OLM operator resources.
+        - repoURL: https://github.com/pierDypi/odh-gitops.git
+          targetRevision: c1be9382ef7da230d4fd3ba003d42e443804c81e
           path: charts/rhai-on-openshift-chart
           helm:
             releaseName: rhai-on-openshift
@@ -49,22 +52,6 @@ spec:
         server: '{{.server}}'
         namespace: redhat-ai-grid
       ignoreDifferences:
-        # ROSA and OSD refuse writes to Red Hat managed Namespaces. The
-        # prerequisite policy owns redhat-ods-operator and the platform owns
-        # openshift-operators-redhat; ignore only the chart's bookkeeping
-        # metadata so Argo never needs to patch either Namespace.
-        - group: ""
-          kind: Namespace
-          name: redhat-ods-operator
-          jsonPointers:
-            - /metadata/labels
-            - /metadata/annotations
-        - group: ""
-          kind: Namespace
-          name: openshift-operators-redhat
-          jsonPointers:
-            - /metadata/labels
-            - /metadata/annotations
         - group: ""
           kind: Secret
           name: grid-model-client-token
@@ -105,8 +92,8 @@ spec:
             factor: 2
             maxDuration: 30m
         syncOptions:
-          # The prerequisite policy owns Namespaces that OSD classifies as
-          # Red Hat managed; Argo must not compete to create them.
+          # Protected Namespaces are owned by ACM or the platform, and the
+          # chart omits them through createNamespace=false.
           - CreateNamespace=false
           - SkipDryRunOnMissingResource=true
           - RespectIgnoreDifferences=true
