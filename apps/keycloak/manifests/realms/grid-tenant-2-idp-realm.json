@@ -74,6 +74,8 @@
       "email": "bob@grid-tenant-2.test",
       "emailVerified": true,
       "enabled": true,
+      "firstName": "Bob",
+      "lastName": "Tenant",
       "groups": [
         "/grid-tenant-2:ai-grid-users"
       ],
