@@ -281,58 +281,6 @@ spec:
                   name: grid-enrollment
                   namespace: {{ .Values.enrollmentNamespace }}
             {{- end }}
-            - complianceType: musthave
-              objectDefinition:
-                apiVersion: networking.k8s.io/v1
-                kind: NetworkPolicy
-                metadata:
-                  name: allow-grid-operator
-                  namespace: {{ .Values.gridNamespace }}
-                spec:
-                  podSelector:
-                    matchLabels:
-                      app.kubernetes.io/name: grid-operator
-                      app.kubernetes.io/instance: grid-operator
-                  policyTypes:
-                    - Ingress
-                  ingress:
-                    - from:
-                        - podSelector: {}
-                        - ipBlock:
-                            cidr: {{ .Values.globalNetCIDR }}
-                      ports:
-                        - protocol: UDP
-                          port: 7946
-                        - protocol: TCP
-                          port: 9091
-            - complianceType: musthave
-              objectDefinition:
-                apiVersion: networking.k8s.io/v1
-                kind: NetworkPolicy
-                metadata:
-                  name: allow-grid-gateway
-                  namespace: {{ .Values.gridNamespace }}
-                spec:
-                  podSelector:
-                    matchLabels:
-                      app.kubernetes.io/name: praxis-gateway
-                      app.kubernetes.io/instance: grid-gateway
-                  policyTypes:
-                    - Ingress
-                  ingress:
-                    - from:
-                        - podSelector: {}
-                        - namespaceSelector:
-                            matchLabels:
-                              kubernetes.io/metadata.name: models-as-a-service
-                        - namespaceSelector:
-                            matchLabels:
-                              kubernetes.io/metadata.name: redhat-ai-gateway-infra
-                        - ipBlock:
-                            cidr: {{ .Values.globalNetCIDR }}
-                      ports:
-                        - protocol: TCP
-                          port: 8080
             {{ "{{ end }}" }}
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
