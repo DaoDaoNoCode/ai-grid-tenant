@@ -62,12 +62,6 @@ spec:
           jsonPointers:
             - /metadata/labels
             - /metadata/annotations
-        - group: gateway.networking.k8s.io
-          kind: Gateway
-          name: maas-default-gateway
-          namespace: openshift-ingress
-          jsonPointers:
-            - /spec
         - group: ""
           kind: Secret
           name: grid-model-client-token
