@@ -6,7 +6,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  source: community-operators
+  source: certified-operators
   sourceNamespace: openshift-marketplace
   name: cloudnative-pg
   channel: stable-v1
