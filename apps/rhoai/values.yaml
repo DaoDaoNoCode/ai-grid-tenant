@@ -75,6 +75,24 @@ components:
         spec:
           listeners:
             - name: https
+              port: 80
+              # hostname: <HOSTNAME> # Uncomment this line to use a specific hostname.
+              protocol: HTTP
+              allowedRoutes:
+                namespaces:
+                  # The following is an example of how to restrict the namespaces to the interested ones.
+                  from: Selector
+                  selector:
+                    matchExpressions:
+                      - key: kubernetes.io/metadata.name
+                        operator: In
+                        values:
+                          - openshift-ingress
+                          # MaaS models in a Grid are represented by ExternalModel resources pointing to the Grid GW.
+                          - models-as-a-service
+                          - redhat-ai-gateway-infra
+
+            - name: https
               port: 443
               # hostname: <HOSTNAME> # Uncomment this line to use a specific hostname.
               protocol: HTTPS
