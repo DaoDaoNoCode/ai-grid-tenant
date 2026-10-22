@@ -23,28 +23,28 @@ PostgreSQL cluster. It can initially report missing namespace or resource
 errors until the `maas-db` Application has created the namespace and installed
 the CloudNativePG CRDs. Its retry policy refreshes and retries automatically.
 
-## Required Secret
+## Generated Secrets
 
-Git does not store Keycloak, client, broker, test-user, or database secrets.
-Before the first sync, create two Secrets in `maas-db`:
+Git does not store Keycloak, client, broker, test-user, or database secret
+values. The app depends on the `external-secrets` Application and uses Password
+generators to create two Secrets in `maas-db`:
 
-- `keycloak-db`, from `database-secret-template.yaml`, holds the dedicated
-  PostgreSQL role credentials consumed by CloudNativePG and Keycloak.
-- `keycloak-secrets`, from `secret-template.yaml`, holds Keycloak bootstrap,
-  client, broker, and test-user values.
+- `keycloak-db` holds the dedicated PostgreSQL role credentials consumed by
+  CloudNativePG and Keycloak.
+- `keycloak-secrets` holds Keycloak bootstrap, client, broker, and test-user
+  values.
 
-For example:
+The `ExternalSecret` resources use `refreshPolicy: CreatedOnce` and
+`refreshInterval: 0s`, so each value is generated once and is not rotated by
+the controller. Their deletion policy retains the generated Secrets if the
+Keycloak app is removed. The Keycloak app may initially report missing resource
+errors until the External Secrets CRDs are installed; its retry policy
+refreshes and retries automatically.
 
-```sh
-cp apps/keycloak/secret-template.yaml /tmp/keycloak-secrets.yaml
-$EDITOR /tmp/keycloak-secrets.yaml
-oc apply -f /tmp/keycloak-secrets.yaml
-rm /tmp/keycloak-secrets.yaml
-cp apps/keycloak/database-secret-template.yaml /tmp/keycloak-db.yaml
-$EDITOR /tmp/keycloak-db.yaml
-oc apply -f /tmp/keycloak-db.yaml
-rm /tmp/keycloak-db.yaml
-```
+The Keycloak admin username and non-secret client configuration are declared in
+the `keycloak-secrets` ExternalSecret template. To retrieve a generated value
+for operational use, read it from the corresponding Kubernetes Secret through
+the cluster's approved secret-access process.
 
 `KEYCLOAK_PUBLIC_URL` must exactly match the Route host in
 `manifests/route.yaml`. Update both files together when deploying to another
@@ -59,6 +59,7 @@ realms. Use a planned Keycloak export/import for changes to existing realms.
 
 ```sh
 kubectl get applications.argoproj.io -n openshift-gitops
+kubectl get externalsecrets -n maas-db
 kubectl get databaseroles,databases -n maas-db
 kubectl rollout status deployment/keycloak -n maas-db
 kubectl get route keycloak -n maas-db

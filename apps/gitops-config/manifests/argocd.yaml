@@ -47,6 +47,97 @@ spec:
         hs.status = "Progressing"
         hs.message = obj.status.phase
         return hs
+    - group: external-secrets.io
+      kind: ExternalSecret
+      check: |
+        hs = {}
+        if obj.status == nil or obj.status.conditions == nil then
+          hs.status = "Progressing"
+          hs.message = "Waiting for ExternalSecret status"
+          return hs
+        end
+        for _, condition in ipairs(obj.status.conditions) do
+          if condition.type == "Ready" then
+            if condition.status == "True" then
+              hs.status = "Healthy"
+              hs.message = condition.message or "ExternalSecret synchronized"
+              return hs
+            elseif condition.status == "False" then
+              hs.status = "Degraded"
+              hs.message = condition.message or "ExternalSecret synchronization failed"
+              return hs
+            end
+          end
+        end
+        hs.status = "Progressing"
+        hs.message = "Waiting for the ExternalSecret Ready condition"
+        return hs
+    - group: operators.coreos.com
+      kind: Subscription
+      check: |
+        hs = {}
+        if obj.status == nil or obj.status.state == nil or obj.status.installedCSV == nil then
+          hs.status = "Progressing"
+          hs.message = "Waiting for the operator subscription to install"
+          return hs
+        end
+        if obj.status.state == "AtLatestKnown" then
+          hs.status = "Healthy"
+          hs.message = "Operator subscription is at the latest known CSV"
+          return hs
+        end
+        if obj.status.state == "Failed" then
+          hs.status = "Degraded"
+          hs.message = "Operator subscription failed"
+          if obj.status.currentCSV ~= nil then
+            hs.message = hs.message .. ": " .. obj.status.currentCSV
+          end
+          return hs
+        end
+        hs.status = "Progressing"
+        hs.message = "Operator subscription state: " .. obj.status.state
+        return hs
+    - group: operator.openshift.io
+      kind: ExternalSecretsConfig
+      check: |
+        hs = {}
+        if obj.status == nil or obj.status.conditions == nil then
+          hs.status = "Progressing"
+          hs.message = "Waiting for External Secrets operand status"
+          return hs
+        end
+        local ready = false
+        local degraded = false
+        local message = "Waiting for External Secrets operand conditions"
+        for _, condition in ipairs(obj.status.conditions) do
+          if condition.type == "Ready" then
+            ready = condition.status == "True"
+            message = condition.message or message
+          elseif condition.type == "Degraded" and condition.status == "True" then
+            degraded = true
+            message = condition.message or message
+          end
+        end
+        if degraded then
+          hs.status = "Degraded"
+          hs.message = message
+          return hs
+        end
+        if ready then
+          hs.status = "Healthy"
+          hs.message = message
+          return hs
+        end
+        hs.status = "Progressing"
+        hs.message = message
+        return hs
+    - group: generators.external-secrets.io
+      kind: Password
+      check: |
+        hs = {}
+        hs.status = "Healthy"
+        hs.message = "Password generator resource is present"
+        return hs
     - group: postgresql.cnpg.io
       kind: Database
       check: |
