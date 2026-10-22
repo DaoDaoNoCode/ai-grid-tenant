@@ -88,6 +88,23 @@ spec:
         server: '{{.server}}'
         namespace: redhat-ai-grid
       ignoreDifferences:
+        # ROSA and OSD refuse any write to a Red Hat managed namespace, so Argo
+        # cannot reconcile the helm bookkeeping labels the chart puts on these
+        # two. Both already exist, created by the platform. Leaving their
+        # metadata unmanaged keeps the sync from failing on every attempt and
+        # stalling every later resource, including the catalog digest.
+        - group: ""
+          kind: Namespace
+          name: redhat-ods-operator
+          jsonPointers:
+            - /metadata/labels
+            - /metadata/annotations
+        - group: ""
+          kind: Namespace
+          name: openshift-operators-redhat
+          jsonPointers:
+            - /metadata/labels
+            - /metadata/annotations
         - group: gateway.networking.k8s.io
           kind: Gateway
           name: maas-default-gateway
