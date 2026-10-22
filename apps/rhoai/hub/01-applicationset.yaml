@@ -38,9 +38,19 @@ spec:
             parameters:
               - name: grid-enrollment.enabled
                 value: '{{ eq .name "local-cluster" | toString }}'
+              - name: praxis-gateway.grid.siteName
+                value: '{{ .name }}'
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           path: apps/rhoai/manifests
+        - repoURL: https://github.com/kahowell/ai-grid-tenant.git
+          targetRevision: HEAD
+          path: apps/rhoai/grid-network
+          helm:
+            releaseName: grid-network
+            parameters:
+              - name: siteName
+                value: '{{ .name }}'
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           path: apps/rhoai/catalog

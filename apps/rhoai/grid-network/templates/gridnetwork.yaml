@@ -1,0 +1,30 @@
+{{- if not .Values.siteName }}
+{{- fail "siteName is required: the rhoai ApplicationSet sets it per cluster" }}
+{{- end }}
+# Declared because nothing generates consumerGateways, and the operator writes
+# serving data only per entry. signalTransport rides along: serving data is
+# written only in poll mode.
+#
+# swimKeySecretRef is deliberately absent. Poll mode does not gossip, and the
+# operator refuses to reconcile a declared ref it cannot resolve, which only the
+# hub can.
+apiVersion: grid.praxis.fast/v1alpha1
+kind: GridNetwork
+metadata:
+  name: {{ .Values.networkName }}
+spec:
+  signalTransport:
+    mode: poll
+  peerTrust:
+    mode: spiffe
+  tls:
+    siteSecretRef:
+      name: grid-site-identity
+      namespace: {{ .Values.namespace }}
+    caSecretRef:
+      name: grid-ca
+      namespace: {{ .Values.namespace }}
+  consumerGateways:
+    - name: {{ .Values.gatewayName }}
+      namespace: {{ .Values.namespace }}
+      siteName: {{ .Values.siteName }}
