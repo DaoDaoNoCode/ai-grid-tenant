@@ -7,6 +7,9 @@ in the reserved `global` ACM cluster set:
 - the `kube-system/additional-pull-secret` and
   `openshift-marketplace/rhoai-catalog-pull-secret` required to pull from
   `quay.io/rhoai`.
+- the catalog ServiceAccount's `imagePullSecrets` wiring is managed by
+  `apps/rhoai/catalog`; OLM does not update an already-created catalog
+  ServiceAccount when `CatalogSource.spec.secrets` changes.
 
 The Quay credentials are never stored in Git. The pull-secret policy uses an
 ACM hub template to check for `rhoai-prerequisites/rhoai-quay-pull-secret`
