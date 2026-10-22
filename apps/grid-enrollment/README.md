@@ -12,6 +12,8 @@ Argo CD cluster secret. Both the Grid enrollment and RHOAI ApplicationSets then 
 their per-cluster Applications automatically.
 `apps/acm-models` also owns the `global` ManagedClusterSetBinding in `openshift-gitops`;
 Grid enrollment depends on that binding instead of creating a duplicate.
+The invite-token namespace is explicitly configured for the enrollment chart and is
+therefore created by `apps/grid-enrollment/manifests`, not by the chart.
 
 The enrollment service reconciles the new `SiteInvite` into a one-time token Secret. ACM
 copies that token, the Grid CA bundle, and the SWIM key to the new cluster, while the

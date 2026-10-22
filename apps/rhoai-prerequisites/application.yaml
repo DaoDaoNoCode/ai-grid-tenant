@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rhoai-prerequisites
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kahowell/ai-grid-tenant.git
+    targetRevision: HEAD
+    path: apps/rhoai-prerequisites/hub
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rhoai-prerequisites
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      refresh: true
+      limit: 20
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 30m
+    syncOptions:
+      - CreateNamespace=true
+      - SkipDryRunOnMissingResource=true

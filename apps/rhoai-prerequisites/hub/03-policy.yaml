@@ -1,0 +1,63 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: rhoai-prerequisites
+  namespace: rhoai-prerequisites
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  disabled: false
+  remediationAction: enforce
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: rhoai-image-mirror
+        spec:
+          remediationAction: enforce
+          severity: low
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: operator.openshift.io/v1alpha1
+                kind: ImageContentSourcePolicy
+                metadata:
+                  name: quay-registry
+                spec:
+                  repositoryDigestMirrors:
+                    - source: registry.redhat.io/rhoai
+                      mirrors:
+                        - quay.io/rhoai
+                    - source: registry.redhat.io/rhaii
+                      mirrors:
+                        - registry.stage.redhat.io/rhaii
+                    - source: registry.redhat.io/rhaii-early-access
+                      mirrors:
+                        - registry.stage.redhat.io/rhaii-early-access
+                    - source: registry.redhat.io/rhaii-fast
+                      mirrors:
+                        - registry.stage.redhat.io/rhaii-fast
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: rhoai-quay-pull-secret
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates-raw: |
+            {{hub- if (lookup "v1" "Secret" "rhoai-prerequisites" "rhoai-quay-pull-secret") hub}}
+            {{hub- if (fromSecret "rhoai-prerequisites" "rhoai-quay-pull-secret" ".dockerconfigjson") hub}}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: additional-pull-secret
+                  namespace: kube-system
+                type: kubernetes.io/dockerconfigjson
+                data:
+                  .dockerconfigjson: '{{hub fromSecret "rhoai-prerequisites" "rhoai-quay-pull-secret" ".dockerconfigjson" hub}}'
+            {{hub- end hub}}
+            {{hub- end hub}}

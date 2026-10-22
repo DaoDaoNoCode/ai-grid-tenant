@@ -1,6 +1,6 @@
 # Nightly RHOAI catalog (FBC fragment); image managed in apps/rhoai/nightly.yaml.
-# Requires the quay.io/rhoai pull secret and ROSA image-mirror provisioned by
-# bootstrap/rhoai-nightly.sh.
+# Requires the quay.io/rhoai prerequisites distributed by
+# apps/rhoai-prerequisites.
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:

@@ -5,7 +5,7 @@ operator:
   rhoai:
     olm:
       # Nightly catalog (image ref managed in apps/rhoai/nightly.yaml);
-      # requires the quay.io/rhoai mirror + pull secret from bootstrap.sh.
+      # requires prerequisites distributed by apps/rhoai-prerequisites.
       source: rhoai-catalog-dev
       channel: stable-3.6
 # Workaround for https://redhat.atlassian.net/browse/RHOAIENG-99507:

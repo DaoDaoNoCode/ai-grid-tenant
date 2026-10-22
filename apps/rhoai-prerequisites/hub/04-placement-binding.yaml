@@ -1,0 +1,15 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: rhoai-prerequisites
+  namespace: rhoai-prerequisites
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+placementRef:
+  apiVersion: cluster.open-cluster-management.io/v1beta1
+  kind: Placement
+  name: rhoai-prerequisites-clusters
+subjects:
+  - apiVersion: policy.open-cluster-management.io/v1
+    kind: Policy
+    name: rhoai-prerequisites

@@ -1,0 +1,10 @@
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: rhoai-prerequisites-clusters
+  namespace: rhoai-prerequisites
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  clusterSets:
+    - global

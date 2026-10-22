@@ -27,6 +27,6 @@ oc apply -f bootstrap/applicationset.yaml
 oc apply -f bootstrap/openshift-gitops-admin.yaml
 oc patch consoles.operator.openshift.io cluster --patch '{ "spec": { "plugins": ["gitops-plugin"] } }' --type=merge
 
-# RHOAI nightly prerequisites (quay.io/rhoai mirror + pull secret; cannot be
-# GitOps-managed). Requires RHOAI_QUAY_PULL_SECRET in the environment.
-bash bootstrap/rhoai-nightly.sh
+# Seed only the hub-side Quay credential. The rhoai-prerequisites ACM app
+# distributes the registry mirror and pull secret to every managed cluster.
+bash apps/rhoai-prerequisites/create-hub-secret.sh
