@@ -6,10 +6,10 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 placementRef:
-  apiVersion: cluster.open-cluster-management.io/v1beta1
+  apiGroup: cluster.open-cluster-management.io
   kind: Placement
   name: rhoai-prerequisites-clusters
 subjects:
-  - apiVersion: policy.open-cluster-management.io/v1
+  - apiGroup: policy.open-cluster-management.io
     kind: Policy
     name: rhoai-prerequisites

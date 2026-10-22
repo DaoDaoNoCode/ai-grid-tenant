@@ -1,0 +1,60 @@
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: global
+  namespace: open-cluster-management
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  clusterSet: global
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: policy-addons-clusters
+  namespace: open-cluster-management
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  clusterSets:
+    - global
+---
+apiVersion: addon.open-cluster-management.io/v1beta1
+kind: ClusterManagementAddOn
+metadata:
+  name: governance-policy-framework
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  addOnMeta:
+    description: Distributes policies and collects policy evaluation results.
+    displayName: Governance Policy Framework Addon
+  defaultConfigs:
+    - group: addon.open-cluster-management.io
+      name: __reserved_no_default__
+      resource: addondeploymentconfigs
+  installStrategy:
+    type: Placements
+    placements:
+      - name: policy-addons-clusters
+        namespace: open-cluster-management
+---
+apiVersion: addon.open-cluster-management.io/v1beta1
+kind: ClusterManagementAddOn
+metadata:
+  name: config-policy-controller
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  addOnMeta:
+    description: Audits k8s resources and remediates violation based on configuration policies.
+    displayName: Config Policy Addon
+  defaultConfigs:
+    - group: addon.open-cluster-management.io
+      name: __reserved_no_default__
+      resource: addondeploymentconfigs
+  installStrategy:
+    type: Placements
+    placements:
+      - name: policy-addons-clusters
+        namespace: open-cluster-management
