@@ -1,0 +1,24 @@
+# KServe admits the metrics port from the monitoring namespaces only, so the
+# operator's scrape is dropped without this.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  name: grid-operator-metrics-scraping
+  namespace: ai-grid-internal-models
+spec:
+  # The scheduler only; the model pod serves its own 9090 that Grid never reads.
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: llminferenceservice-router-scheduler
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - port: 9090
+          protocol: TCP
+      from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: redhat-ai-grid
