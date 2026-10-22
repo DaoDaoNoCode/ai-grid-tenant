@@ -26,10 +26,12 @@
         {
           "name": "MaaS tenant groups",
           "protocol": "openid-connect",
-          "protocolMapper": "oidc-group-membership-mapper",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
           "config": {
+            "user.attribute": "maas_groups",
             "claim.name": "groups",
-            "full.path": "false",
+            "jsonType.label": "String",
+            "multivalued": "true",
             "id.token.claim": "true",
             "userinfo.token.claim": "true",
             "access.token.claim": "false"
@@ -66,8 +68,13 @@
     ]
   },
   "groups": [
-    { "name": "grid-tenant-1:ai-grid-admins" },
-    { "name": "grid-tenant-1:ai-grid-users" }
+    {
+      "name": "42c3e46f-2477-44d7-a85b-d3b43f6b31fa",
+      "subGroups": [
+        { "name": "ai-grid-admins" },
+        { "name": "ai-grid-users" }
+      ]
+    }
   ],
   "users": [
     {
@@ -78,12 +85,16 @@
       "firstName": "Alice",
       "lastName": "Tenant",
       "groups": [
-        "/grid-tenant-1:ai-grid-admins",
-        "/grid-tenant-1:ai-grid-users"
+        "/42c3e46f-2477-44d7-a85b-d3b43f6b31fa/ai-grid-admins",
+        "/42c3e46f-2477-44d7-a85b-d3b43f6b31fa/ai-grid-users"
       ],
       "attributes": {
+        "maas_groups": [
+          "42c3e46f-2477-44d7-a85b-d3b43f6b31fa/ai-grid-admins",
+          "42c3e46f-2477-44d7-a85b-d3b43f6b31fa/ai-grid-users"
+        ],
         "maas_orgs_json": [
-          "[{\"tenant_id\":\"grid-tenant-1\",\"roles\":[\"admins\"]}]"
+          "[{\"organization_id\":\"42c3e46f-2477-44d7-a85b-d3b43f6b31fa\",\"roles\":[\"admins\"]}]"
         ]
       },
       "credentials": [

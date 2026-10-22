@@ -6,6 +6,8 @@ metadata:
   name: ocp-users
   namespace: models-as-a-service
 spec:
+  organization:
+    id: 42c3e46f-2477-44d7-a85b-d3b43f6b31fa
   modelRefs:
   - name: facebook-opt-125m
     namespace: models-as-a-service
@@ -14,7 +16,7 @@ spec:
       window: 1m
   owner:
     groups:
-    - name: system:authenticated
+    - name: 42c3e46f-2477-44d7-a85b-d3b43f6b31fa/ai-grid-users
   priority: 0
 ---
 apiVersion: maas.opendatahub.io/v1alpha1
@@ -30,4 +32,5 @@ spec:
     namespace: models-as-a-service
   subjects:
     groups:
-    - name: system:authenticated
+    - name: 42c3e46f-2477-44d7-a85b-d3b43f6b31fa/ai-grid-admins
+    - name: 42c3e46f-2477-44d7-a85b-d3b43f6b31fa/ai-grid-users
