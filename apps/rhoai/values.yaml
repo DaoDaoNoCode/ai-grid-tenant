@@ -85,9 +85,7 @@ components:
   aigateway:
     dsc:
       aiGrid:
-        # Torn down to rebuild from scratch. Flip back to Managed to reinstall:
-        # the ai-gateway-operator reinstalls the CRDs and the grid operator.
-        managementState: Removed
+        managementState: Managed
     modelsAsAService:
       gateway:
         spec:
@@ -172,5 +170,26 @@ grid-enrollment:
     swimKeySecretName: grid-swim-key
     seedSecretName: grid-reserved-seeds
 
+# Nothing here declares a GridNetwork or GridSite: the operator creates its own
+# records from its identity. flavor is explicit because the chart only infers
+# grid-gateway from a repository name ending in /grid-gateway, which the RHOAI
+# image does not.
 praxis-gateway:
-  enabled: false
+  enabled: true
+  image:
+    flavor: grid-gateway
+  grid:
+    networkName: grid
+    siteName: local-cluster
+  praxisConfig:
+    source: operator
+    operator:
+      configMapName: praxis-consumer-config
+  gridIdentity:
+    tlsSecretName: grid-site-identity
+    caSecretName: grid-ca
+    mountPath: /etc/praxis/tls
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 8080
