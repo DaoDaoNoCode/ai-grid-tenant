@@ -69,7 +69,9 @@ components:
   aigateway:
     dsc:
       aiGrid:
-        managementState: Managed
+        # Torn down to rebuild from scratch. Flip back to Managed to reinstall:
+        # the ai-gateway-operator reinstalls the CRDs and the grid operator.
+        managementState: Removed
     modelsAsAService:
       gateway:
         spec:
