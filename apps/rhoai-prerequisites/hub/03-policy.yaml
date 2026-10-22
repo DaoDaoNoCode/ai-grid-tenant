@@ -59,5 +59,15 @@ spec:
                 type: kubernetes.io/dockerconfigjson
                 data:
                   .dockerconfigjson: '{{hub fromSecret "rhoai-prerequisites" "rhoai-quay-pull-secret" ".dockerconfigjson" hub}}'
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: rhoai-catalog-pull-secret
+                  namespace: openshift-marketplace
+                type: kubernetes.io/dockerconfigjson
+                data:
+                  .dockerconfigjson: '{{hub fromSecret "rhoai-prerequisites" "rhoai-quay-pull-secret" ".dockerconfigjson" hub}}'
             {{hub- end hub}}
             {{hub- end hub}}

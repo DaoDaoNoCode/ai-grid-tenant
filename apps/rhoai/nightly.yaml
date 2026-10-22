@@ -1,7 +1,7 @@
 # Source of truth for the RHOAI nightly catalog image (FBC fragment).
 # Consumed as the values file for apps/rhoai/catalog by the rhoai Application.
 # Requires the quay.io/rhoai prerequisites distributed by
-# apps/rhoai-prerequisites.
+# apps/rhoai-prerequisites, including the catalog namespace pull secret.
 image:
   registry: quay.io
   repository: rhoai/rhoai-fbc-fragment

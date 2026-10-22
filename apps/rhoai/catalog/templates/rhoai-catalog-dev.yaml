@@ -10,4 +10,6 @@ spec:
   displayName: Red Hat OpenShift AI (nightly)
   publisher: RHOAI Development Catalog
   image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+  secrets:
+    - rhoai-catalog-pull-secret
   sourceType: grpc

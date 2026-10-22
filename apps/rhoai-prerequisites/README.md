@@ -4,7 +4,8 @@ This app distributes the RHOAI nightly registry prerequisites to every cluster
 in the reserved `global` ACM cluster set:
 
 - the same `ImageContentSourcePolicy` used by the hub;
-- the `kube-system/additional-pull-secret` required to pull from
+- the `kube-system/additional-pull-secret` and
+  `openshift-marketplace/rhoai-catalog-pull-secret` required to pull from
   `quay.io/rhoai`.
 
 The Quay credentials are never stored in Git. The pull-secret policy uses an
