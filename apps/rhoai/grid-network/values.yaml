@@ -1,8 +1,8 @@
 # -- Grid network name.
 networkName: grid
-# -- This cluster's site name. Set per cluster by the rhoai ApplicationSet.
+# -- Site name. Set per cluster by the rhoai ApplicationSet.
 siteName: ""
-# -- Namespace holding the operator's identity Secrets.
+# -- Namespace holding the identity Secrets.
 namespace: redhat-ai-grid
 # -- Consumer gateway this site serves through.
 gatewayName: grid-gateway

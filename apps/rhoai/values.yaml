@@ -176,12 +176,11 @@ grid-enrollment:
   invites:
     ai-grid-2:
       network: grid
-  # ACM delivers each invited site its token, CA bundle and gossip key, so no
-  # Secret is copied by hand.
+  # The chart's policy reads the token from the release namespace, where it is
+  # never written, so it cannot become compliant. A spoke has no enrollment
+  # configuration to redeem one with either.
   invitePolicy:
-    enabled: true
-    namespace: redhat-ai-grid
-    clusterSet: global
+    enabled: false
   hubSite:
     name: local-cluster
     namespace: redhat-ai-grid
