@@ -5,13 +5,14 @@ metadata:
   namespace: openshift-gitops
 spec:
   # The controller now caches both the in-cluster destination and the
-  # GitOpsCluster proxy destination; 2 GiB is not enough during startup.
+  # GitOpsCluster proxy destination; 4 GiB is not enough during startup and
+  # fan-out reconciliation.
   controller:
     resources:
       requests:
         memory: 2Gi
       limits:
-        memory: 4Gi
+        memory: 8Gi
   # RedisReplication is intentionally omitted because the Redis operator does
   # not currently populate a resource status for Argo to evaluate.
   resourceHealthChecks:

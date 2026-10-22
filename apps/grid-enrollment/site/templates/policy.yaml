@@ -253,21 +253,21 @@ spec:
                   externalName: {{ printf "%s.%s.svc.cluster.local" $gatewayName .Values.gridNamespace | quote }}
             - complianceType: musthave
               objectDefinition:
-                apiVersion: submariner.io/v1alpha1
+                apiVersion: multicluster.x-k8s.io/v1alpha1
                 kind: ServiceExport
                 metadata:
                   name: {{ $swimServiceName }}
                   namespace: {{ .Values.gridNamespace }}
             - complianceType: musthave
               objectDefinition:
-                apiVersion: submariner.io/v1alpha1
+                apiVersion: multicluster.x-k8s.io/v1alpha1
                 kind: ServiceExport
                 metadata:
                   name: {{ $signalsServiceName }}
                   namespace: {{ .Values.gridNamespace }}
             - complianceType: musthave
               objectDefinition:
-                apiVersion: submariner.io/v1alpha1
+                apiVersion: multicluster.x-k8s.io/v1alpha1
                 kind: ServiceExport
                 metadata:
                   name: {{ $gatewayName }}
@@ -275,7 +275,7 @@ spec:
             {{- if eq (include "grid-enrollment-site.isHub" .) "true" }}
             - complianceType: musthave
               objectDefinition:
-                apiVersion: submariner.io/v1alpha1
+                apiVersion: multicluster.x-k8s.io/v1alpha1
                 kind: ServiceExport
                 metadata:
                   name: grid-enrollment
