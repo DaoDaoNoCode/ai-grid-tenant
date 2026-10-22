@@ -61,9 +61,13 @@ spec:
         - name: keycloak
           image: quay.io/keycloak/keycloak:26.8.0
           imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -c
           args:
-            - start
-            - --import-realm
+            - |
+              /opt/keycloak/bin/kc.sh import --dir /opt/keycloak/data/import --override true
+              exec /opt/keycloak/bin/kc.sh start
           ports:
             - name: http
               containerPort: 8080
