@@ -4,10 +4,11 @@ This app distributes the RHOAI nightly registry prerequisites to every cluster
 in the reserved `global` ACM cluster set:
 
 - the protected `redhat-ai-grid` and `redhat-ods-operator` Namespaces;
-- the same `ImageContentSourcePolicy` used by the hub;
-- the `kube-system/additional-pull-secret` and
-  `openshift-marketplace/rhoai-catalog-pull-secret` required to pull from
-  `quay.io/rhoai`.
+- the same `ImageDigestMirrorSet` used by the hub;
+- the `openshift-marketplace/rhoai-catalog-pull-secret` required to pull the
+  RHOAI catalog image;
+- a merged `openshift-config/pull-secret` entry for `quay.io/rhoai`, required
+  for mirrored operator-bundle pulls.
 - the catalog ServiceAccount's `imagePullSecrets` wiring is managed by
   `apps/rhoai/catalog`; OLM does not update an already-created catalog
   ServiceAccount when `CatalogSource.spec.secrets` changes.
@@ -27,9 +28,11 @@ cluster in the `global` cluster set, and the RHOAI ApplicationSet deploys after
 them. No per-cluster `rosa`, `ocm`, or pull-secret command is required when a
 managed cluster joins.
 
-The pull-secret policy owns `kube-system/additional-pull-secret`. A cluster
-that already uses that Secret for unrelated credentials must merge those
-credentials into the hub-side source Secret before enabling this policy.
+The global pull-secret policy is idempotent. It reads the current
+`openshift-config/pull-secret`, preserves every existing credential, and
+converges only the repository-scoped `quay.io/rhoai` entry to the hub-side
+RHOAI credential. Updating that Secret triggers the normal Machine Config
+Operator rollout to each node.
 
 ## Create the hub Secret
 
@@ -59,6 +62,8 @@ kubectl --context "$HUB_CONTEXT" -n rhoai-prerequisites get secret rhoai-quay-pu
   -o custom-columns='NAME:.metadata.name,TYPE:.type'
 kubectl --context "$HUB_CONTEXT" -n rhoai-prerequisites get placementdecisions
 kubectl --context "$HUB_CONTEXT" get policies -n rhoai-prerequisites
-kubectl --context "$SPOKE_CONTEXT" -n kube-system get secret additional-pull-secret \
+kubectl --context "$SPOKE_CONTEXT" -n openshift-config get secret pull-secret \
   -o custom-columns='NAME:.metadata.name,TYPE:.type'
+kubectl --context "$SPOKE_CONTEXT" -n rhoai-prerequisites get configurationpolicy \
+  rhoai-global-pull-secret
 ```

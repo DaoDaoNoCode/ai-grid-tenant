@@ -41,24 +41,28 @@ spec:
           object-templates:
             - complianceType: musthave
               objectDefinition:
-                apiVersion: operator.openshift.io/v1alpha1
-                kind: ImageContentSourcePolicy
+                apiVersion: config.openshift.io/v1
+                kind: ImageDigestMirrorSet
                 metadata:
                   name: quay-registry
                 spec:
-                  repositoryDigestMirrors:
+                  imageDigestMirrors:
                     - source: registry.redhat.io/rhoai
                       mirrors:
                         - quay.io/rhoai
+                      mirrorSourcePolicy: NeverContactSource
                     - source: registry.redhat.io/rhaii
                       mirrors:
                         - registry.stage.redhat.io/rhaii
+                      mirrorSourcePolicy: NeverContactSource
                     - source: registry.redhat.io/rhaii-early-access
                       mirrors:
                         - registry.stage.redhat.io/rhaii-early-access
+                      mirrorSourcePolicy: NeverContactSource
                     - source: registry.redhat.io/rhaii-fast
                       mirrors:
                         - registry.stage.redhat.io/rhaii-fast
+                      mirrorSourcePolicy: NeverContactSource
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
@@ -75,16 +79,6 @@ spec:
                 apiVersion: v1
                 kind: Secret
                 metadata:
-                  name: additional-pull-secret
-                  namespace: kube-system
-                type: kubernetes.io/dockerconfigjson
-                data:
-                  .dockerconfigjson: '{{hub fromSecret "rhoai-prerequisites" "rhoai-quay-pull-secret" ".dockerconfigjson" hub}}'
-            - complianceType: musthave
-              objectDefinition:
-                apiVersion: v1
-                kind: Secret
-                metadata:
                   name: rhoai-catalog-pull-secret
                   namespace: openshift-marketplace
                 type: kubernetes.io/dockerconfigjson
@@ -92,3 +86,35 @@ spec:
                   .dockerconfigjson: '{{hub fromSecret "rhoai-prerequisites" "rhoai-quay-pull-secret" ".dockerconfigjson" hub}}'
             {{hub- end hub}}
             {{hub- end hub}}
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: rhoai-global-pull-secret
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates-raw: |
+            {{- $sourceSecret := lookup "v1" "Secret" "openshift-marketplace" "rhoai-catalog-pull-secret" -}}
+            {{- $globalSecret := lookup "v1" "Secret" "openshift-config" "pull-secret" -}}
+            {{- if and $sourceSecret $globalSecret -}}
+            {{- $sourceConfig := fromSecret "openshift-marketplace" "rhoai-catalog-pull-secret" ".dockerconfigjson" | base64dec | fromJson -}}
+            {{- $globalConfig := fromSecret "openshift-config" "pull-secret" ".dockerconfigjson" | base64dec | fromJson -}}
+            {{- $sourceAuths := index $sourceConfig "auths" -}}
+            {{- $sourceAuth := index $sourceAuths "quay.io/rhoai" -}}
+            {{- if not $sourceAuth -}}
+            {{- $sourceAuth = index $sourceAuths "quay.io" -}}
+            {{- end -}}
+            {{- $mergedAuths := mustMerge (index $globalConfig "auths") (dict "quay.io/rhoai" $sourceAuth) -}}
+            {{- $mergedConfig := mustMerge $globalConfig (dict "auths" $mergedAuths) -}}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: pull-secret
+                  namespace: openshift-config
+                type: kubernetes.io/dockerconfigjson
+                data:
+                  .dockerconfigjson: '{{ $mergedConfig | toJson | base64enc }}'
+            {{- end -}}
