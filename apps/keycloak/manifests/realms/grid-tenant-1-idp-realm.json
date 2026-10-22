@@ -55,6 +55,27 @@
     }
   ],
   "components": {
+    "org.keycloak.keys.KeyProvider": [
+      {
+        "id": "3e4c96cc-b3b4-48d0-bab6-cb67fffc6cfb",
+        "name": "grid-tenant-1-idp-signing",
+        "providerId": "java-keystore",
+        "subComponents": {},
+        "config": {
+          "kid": ["3e4c96cc-b3b4-48d0-bab6-cb67fffc6cfb"],
+          "priority": ["1000"],
+          "enabled": ["true"],
+          "active": ["true"],
+          "algorithm": ["RS256"],
+          "keyUse": ["SIG"],
+          "keystore": ["/opt/keycloak/data/grid-tenant-1-idp/keystore.jks"],
+          "keystoreType": ["JKS"],
+          "keystorePassword": ["${KEYCLOAK_SIGNING_KEYSTORE_PASSWORD}"],
+          "keyAlias": ["grid-tenant-1-idp-signing"],
+          "keyPassword": ["${KEYCLOAK_SIGNING_KEYSTORE_PASSWORD}"]
+        }
+      }
+    ],
     "org.keycloak.userprofile.UserProfileProvider": [
       {
         "id": "b5919e8a-046d-47e7-8a2c-f30f5ff12001",

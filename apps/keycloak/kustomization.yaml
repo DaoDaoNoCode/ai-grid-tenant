@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: maas-db
 resources:
   - manifests/secrets.yaml
+  - manifests/signing-keys.yaml
   - manifests/database.yaml
   - manifests/keycloak.yaml
   - manifests/route.yaml

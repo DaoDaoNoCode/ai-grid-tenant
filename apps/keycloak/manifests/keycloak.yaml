@@ -40,6 +40,7 @@ spec:
                   line=${line//\$\{GRID_TENANT_2_BROKER_CLIENT_SECRET\}/$GRID_TENANT_2_BROKER_CLIENT_SECRET}
                   line=${line//\$\{GRID_TENANT_1_TEST_USER_PASSWORD\}/$GRID_TENANT_1_TEST_USER_PASSWORD}
                   line=${line//\$\{GRID_TENANT_2_TEST_USER_PASSWORD\}/$GRID_TENANT_2_TEST_USER_PASSWORD}
+              line=${line//\$\{KEYCLOAK_SIGNING_KEYSTORE_PASSWORD\}/$KEYCLOAK_SIGNING_KEYSTORE_PASSWORD}
                   printf '%s\n' "$line"
                 done
               }
@@ -51,6 +52,12 @@ spec:
           envFrom:
             - secretRef:
                 name: keycloak-secrets
+          env:
+            - name: KEYCLOAK_SIGNING_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-signing-keystore-password
+                  key: password
           volumeMounts:
             - name: realm-import-source
               mountPath: /opt/keycloak/realm-import-source
@@ -135,6 +142,15 @@ spec:
             - name: database-ca
               mountPath: /opt/keycloak/database-ca
               readOnly: true
+            - name: saas-signing-key
+              mountPath: /opt/keycloak/data/saas
+              readOnly: true
+            - name: grid-tenant-1-idp-signing-key
+              mountPath: /opt/keycloak/data/grid-tenant-1-idp
+              readOnly: true
+            - name: grid-tenant-2-idp-signing-key
+              mountPath: /opt/keycloak/data/grid-tenant-2-idp
+              readOnly: true
             - name: realm-import
               mountPath: /opt/keycloak/data/import
               readOnly: true
@@ -142,6 +158,24 @@ spec:
         - name: database-ca
           secret:
             secretName: maas-db-ca
+        - name: saas-signing-key
+          secret:
+            secretName: keycloak-saas-signing
+            items:
+              - key: keystore.jks
+                path: keystore.jks
+        - name: grid-tenant-1-idp-signing-key
+          secret:
+            secretName: keycloak-grid-tenant-1-idp-signing
+            items:
+              - key: keystore.jks
+                path: keystore.jks
+        - name: grid-tenant-2-idp-signing-key
+          secret:
+            secretName: keycloak-grid-tenant-2-idp-signing
+            items:
+              - key: keystore.jks
+                path: keystore.jks
         - name: realm-import-source
           configMap:
             name: keycloak-realm-import
