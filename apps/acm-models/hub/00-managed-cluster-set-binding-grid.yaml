@@ -1,0 +1,12 @@
+# The grid-enrollment invite Policy renders into the chart's release namespace,
+# and a Placement there can only select from a cluster set bound in the same
+# namespace. ACM requires the name to equal the cluster set.
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: global
+  namespace: redhat-ai-grid
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  clusterSet: global
