@@ -13,6 +13,10 @@ spec:
   metricsPath: /metrics
   scrapeInterval: 30s
   scheme: HTTP
+  authorization:
+    credentials:
+      name: grid-epp-metrics-reader-token
+      key: token
   staticConfigs:
     - targets:
         - facebook-opt-125m-epp-service.ai-grid-internal-models.svc:9090
