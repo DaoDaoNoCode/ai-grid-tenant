@@ -57,6 +57,12 @@ spec:
           path: apps/rhoai/local-cluster
           directory:
             exclude: '{{ if eq .name "local-cluster" }}{{ else }}*{{ end }}'
+        # The hub collects through ai-grid-o11y; a managed cluster's collector needs its own copies.
+        - repoURL: https://github.com/kahowell/ai-grid-tenant.git
+          targetRevision: HEAD
+          path: apps/ai-grid-o11y/spoke
+          directory:
+            exclude: '{{ if eq .name "local-cluster" }}*{{ end }}'
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           path: apps/rhoai/grid-network
