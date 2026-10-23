@@ -1,0 +1,37 @@
+# SWIM carries membership even under signalTransport poll, and its packets are keyed by
+# one grid-wide secret, so every gossiping site needs the hub's bytes. The enrollment
+# redeem response carries only public material and does not deliver this.
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: grid-swim-key
+  namespace: redhat-ai-grid
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: grid-swim-key
+        spec:
+          remediationAction: enforce
+          severity: high
+          namespaceSelector:
+            include:
+              - redhat-ai-grid
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: grid-swim-key
+                  namespace: redhat-ai-grid
+                type: Opaque
+                data:
+                  # Resolved on the hub, so the key is never in git.
+                  key: '{{hub fromSecret "redhat-ai-grid" "grid-swim-key" "key" hub}}'
