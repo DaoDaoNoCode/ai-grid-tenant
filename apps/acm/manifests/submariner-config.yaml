@@ -6,6 +6,9 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 spec:
+  # ROSA does not let a tenant open the node ports libreswan needs, so the
+  # gateway takes a load balancer instead.
+  loadBalancerEnable: true
   gatewayConfig:
     gateways: 2
 ---
@@ -17,5 +20,8 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 spec:
+  # ROSA does not let a tenant open the node ports libreswan needs, so the
+  # gateway takes a load balancer instead.
+  loadBalancerEnable: true
   gatewayConfig:
     gateways: 2
