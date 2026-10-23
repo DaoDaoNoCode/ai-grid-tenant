@@ -14,4 +14,6 @@ spec:
   scheme: HTTP
   staticConfigs:
     - targets:
-        - data-science-collector-collector.redhat-ods-monitoring.svc:8890
+        # The Service serving 8890 is data-science-collector-monitoring; the name
+        # with the extra -collector does not exist, so this job delivered nothing.
+        - data-science-collector-monitoring.redhat-ods-monitoring.svc:8890

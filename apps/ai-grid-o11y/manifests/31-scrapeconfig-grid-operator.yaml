@@ -1,0 +1,23 @@
+# The operator's own series: peers, providers and site phase.
+apiVersion: monitoring.rhobs/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: grid-operator-metrics
+  namespace: open-cluster-management-observability
+  labels:
+    app.kubernetes.io/component: user-workload-metrics-collector
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  jobName: grid-operator-metrics
+  metricsPath: /metrics
+  scheme: HTTPS
+  tlsConfig:
+    ca:
+      configMap:
+        name: openshift-service-ca.crt
+        key: service-ca.crt
+    serverName: grid-operator-metrics.redhat-ai-grid.svc
+  staticConfigs:
+    - targets:
+        - grid-operator-metrics.redhat-ai-grid.svc:9090
