@@ -61,11 +61,14 @@ spec:
           path: apps/rhoai/grid-network
           helm:
             releaseName: grid-network
+            # A site may declare the record only once it holds the enrolled
+            # identity, so the file turning it on is the record of that.
+            ignoreMissingValueFiles: true
+            valueFiles:
+              - $values/apps/rhoai/grid-network-{{ .name }}.yaml
             parameters:
               - name: siteName
                 value: '{{ .name }}'
-              - name: enabled
-                value: '{{ eq .name "local-cluster" | toString }}'
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           path: apps/rhoai/catalog

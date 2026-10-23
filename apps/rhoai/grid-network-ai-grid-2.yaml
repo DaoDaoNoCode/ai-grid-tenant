@@ -1,0 +1,4 @@
+# ai-grid-2 holds the enrolled identity, so it declares its own record. Nothing
+# generates consumerGateways, and the operator writes serving data per entry and
+# only in poll mode, so the gateway has no candidates without this.
+enabled: true
