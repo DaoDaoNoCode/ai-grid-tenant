@@ -51,6 +51,8 @@ spec:
             parameters:
               - name: siteName
                 value: '{{ .name }}'
+              - name: enabled
+                value: '{{ eq .name "local-cluster" | toString }}'
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           path: apps/rhoai/catalog

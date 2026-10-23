@@ -6,3 +6,7 @@ siteName: ""
 namespace: redhat-ai-grid
 # -- Consumer gateway this site serves through.
 gatewayName: grid-gateway
+# -- Render the record. Only the site that creates the grid may declare one: the
+# operator self-signs a CA named grid-ca when a GridNetwork names Secrets that do
+# not exist, which forks the trust domain on a site that should enrol.
+enabled: false
