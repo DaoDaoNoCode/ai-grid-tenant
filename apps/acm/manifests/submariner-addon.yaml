@@ -10,13 +10,3 @@ metadata:
     argocd.argoproj.io/sync-wave: "6"
 spec:
   installNamespace: submariner-operator
----
-apiVersion: addon.open-cluster-management.io/v1alpha1
-kind: ManagedClusterAddOn
-metadata:
-  name: submariner
-  namespace: ai-grid-2
-  annotations:
-    argocd.argoproj.io/sync-wave: "6"
-spec:
-  installNamespace: submariner-operator
