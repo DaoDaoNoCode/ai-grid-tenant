@@ -1,0 +1,33 @@
+# Lets the fleet collector reach the grid metrics listeners. The chart admits the
+# cluster's own monitoring and the operator's kustomize policy admits that plus
+# openshift-monitoring, neither of which includes the collector. Policies are
+# additive, so this complements both and is not reconciled away.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-acm-grid-metrics
+  namespace: redhat-ai-grid
+  labels:
+    app.kubernetes.io/component: user-workload-metrics-collector
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - praxis-gateway
+          - grid-operator
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: open-cluster-management-agent-addon
+      ports:
+        - port: 9443
+          protocol: TCP
+        - port: 9090
+          protocol: TCP
