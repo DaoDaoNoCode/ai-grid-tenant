@@ -28,6 +28,13 @@ Run the smoke test for an administrator:
 docs/maas-oidc-smoke/scripts/maas-oidc-smoke.sh alice
 ```
 
+Use a specific Kubernetes context by setting `KUBE_CONTEXT`:
+
+```sh
+KUBE_CONTEXT='<context-name>' \
+  docs/maas-oidc-smoke/scripts/maas-oidc-smoke.sh alice
+```
+
 Run it for a user without an accessible subscription:
 
 ```sh
