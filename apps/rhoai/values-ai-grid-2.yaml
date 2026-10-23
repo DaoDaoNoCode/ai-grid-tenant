@@ -15,3 +15,11 @@ praxis-gateway:
               key: service-ca.crt
           # praxis refuses a name that resolves to a private address.
           trustPrivate: true
+        # The peer's provider gateway. No SNI here, so the chart defaults it to
+        # local-cluster.grid.internal, the name the peer's leaf carries.
+        - cluster: peer-local-cluster
+          site: local-cluster
+          endpoints:
+            - acaf42d7daad64bd09881dc28497b00e-0a5b4605595d1705.elb.us-east-2.amazonaws.com:8080
+          transport:
+            mode: mutual_tls
