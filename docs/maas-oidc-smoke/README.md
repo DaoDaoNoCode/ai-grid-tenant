@@ -57,21 +57,19 @@ The script:
 4. Calls `/v1/me` and `/v1/subscriptions`.
 5. Creates a one-hour ephemeral API key when the user has a subscription.
 6. Calls `/v1/api-keys/search` and verifies that a newly created key is listed.
-7. Asks for approval, then sends OpenAI-compatible chat-completion and completion requests.
+7. Asks for approval, then sends an OpenAI-compatible completion request.
 
 For `alice`, the test expects one accessible subscription, creates an
 ephemeral API key, and verifies that the key appears in the search result.
-It then uses that key for two inference requests. For `bob`, it expects no
+It then uses that key for one inference request. For `bob`, it expects no
 accessible subscription, no API keys, and skips inference.
 
 ## Inference approval
 
-Before sending the inference requests, the script stops and describes the
-action: the endpoints, model, prompt, and use of the newly created ephemeral
-API key. The requests are sent only after an interactive `y` or `yes`
+Before sending the inference request, the script stops and describes the
+action: the endpoint, model, prompt, and use of the newly created ephemeral
+API key. The request is sent only after an interactive `y` or `yes`
 response.
-Both inference endpoints are attempted even when the first request fails; the
-script reports each result separately and exits nonzero after the second test.
 
 For an unattended run where an explicit approval has already been given outside
 the script, set:

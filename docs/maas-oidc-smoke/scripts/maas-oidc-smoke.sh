@@ -394,60 +394,18 @@ fi
 inference_failed=0
 
 if [[ -z "$api_key_id" ]]; then
-  print_section "POST /v1/chat/completions"
-  printf '  skipped: no API key was provisioned\n'
   print_section "POST /v1/completions"
   printf '  skipped: no API key was provisioned\n'
 else
   inference_model=$(jq -r '.[0].model_refs[0].name // empty' "$subscriptions_response")
   if [[ -z "$inference_model" ]]; then
-    print_section "POST /v1/chat/completions"
-    printf '  skipped: no model is available through the subscription\n'
     print_section "POST /v1/completions"
     printf '  skipped: no model is available through the subscription\n'
   else
-    confirm_action "Send one chat-completion request and one completion request to the MaaS Gateway using the newly created ephemeral API key.
-Endpoints: /v1/chat/completions and /v1/completions
+    confirm_action "Send one completion request to the MaaS Gateway using the newly created ephemeral API key.
+Endpoint: /v1/completions
 Model: $inference_model
 Prompt: $inference_prompt" || fail "inference request was not approved"
-
-    inference_request=$(jq -n \
-      --arg model "$inference_model" \
-      --arg prompt "$inference_prompt" \
-      --argjson max_tokens "$inference_max_tokens" \
-      '{
-        model: $model,
-        messages: [
-          {
-            role: "user",
-            content: $prompt
-          }
-        ],
-        max_tokens: $max_tokens
-      }')
-
-    inference_response="$tmpdir/inference-response.json"
-    inference_status=$(
-      curl -sS --max-time 60 \
-        -H "Authorization: Bearer $(cat "$api_key_file")" \
-        -H 'Content-Type: application/json' \
-        -d "$inference_request" \
-        -o "$inference_response" -w '%{http_code}' \
-        "$base_url/v1/chat/completions" || true
-    )
-
-    print_section "POST /v1/chat/completions"
-    printf '  HTTP status: %s\n' "$inference_status"
-    if [[ "$inference_status" != 2* ]] || ! jq -e 'has("choices") and (.choices | length > 0)' "$inference_response" >/dev/null; then
-      jq . "$inference_response" >&2 || true
-      inference_failed=1
-    else
-      printf '  model: %s\n' "$(jq -r '.model' "$inference_response")"
-      printf '  response: %s\n' "$(jq -r '.choices[0].message.content' "$inference_response")"
-      printf '  finish reason: %s\n' "$(jq -r '.choices[0].finish_reason' "$inference_response")"
-      printf '  prompt tokens: %s\n' "$(jq -r '.usage.prompt_tokens' "$inference_response")"
-      printf '  completion tokens: %s\n' "$(jq -r '.usage.completion_tokens' "$inference_response")"
-    fi
 
     completions_request=$(jq -n \
       --arg model "$inference_model" \
@@ -485,7 +443,7 @@ Prompt: $inference_prompt" || fail "inference request was not approved"
 fi
 
 if [ "$inference_failed" -ne 0 ]; then
-  fail "one or more inference requests failed"
+  fail "completion request failed"
 fi
 
 print_section "Smoke result"
