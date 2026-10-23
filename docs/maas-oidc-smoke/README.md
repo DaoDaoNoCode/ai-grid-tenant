@@ -28,10 +28,12 @@ Run the smoke test for an administrator:
 docs/maas-oidc-smoke/scripts/maas-oidc-smoke.sh alice
 ```
 
-Use a specific Kubernetes context by setting `KUBE_CONTEXT`:
+Discover the MaaS Gateway through another Kubernetes context by setting
+`GATEWAY_KUBE_CONTEXT`. Keycloak values are still read from the current
+context:
 
 ```sh
-KUBE_CONTEXT='<context-name>' \
+GATEWAY_KUBE_CONTEXT='<context-name>' \
   docs/maas-oidc-smoke/scripts/maas-oidc-smoke.sh alice
 ```
 

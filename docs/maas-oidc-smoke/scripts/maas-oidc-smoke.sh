@@ -9,8 +9,8 @@ Usage: docs/maas-oidc-smoke/scripts/maas-oidc-smoke.sh USER
 USER must be "alice" or "bob".
 
 Environment overrides:
-  KUBE_CONTEXT           Kubernetes context used for kubectl reads. Defaults to
-                         the current context.
+  GATEWAY_KUBE_CONTEXT   Kubernetes context used only to discover the MaaS
+                         Gateway. Defaults to the current context.
   REDIRECT_URI           Redirect URI registered for the OIDC client. Defaults to
                          KEYCLOAK_REDIRECT_URI from the Keycloak secret.
   ASSUME_YES             Set to 1 to proceed without the inference approval prompt.
@@ -96,7 +96,7 @@ keycloak_namespace="${KEYCLOAK_NAMESPACE:-maas-db}"
 keycloak_secret_name="${KEYCLOAK_SECRET_NAME:-keycloak-secrets}"
 gateway_namespace="${GATEWAY_NAMESPACE:-openshift-ingress}"
 gateway_name="${GATEWAY_NAME:-maas-default-gateway}"
-kube_context="${KUBE_CONTEXT:-}"
+gateway_kube_context="${GATEWAY_KUBE_CONTEXT:-}"
 client_id="${OIDC_CLIENT_ID:-tenant-demo}"
 gateway_protocol="${GATEWAY_PROTOCOL:-http}"
 redirect_uri="${REDIRECT_URI:-}"
@@ -109,27 +109,22 @@ case "$gateway_protocol" in
 esac
 [[ "$inference_max_tokens" =~ ^[1-9][0-9]*$ ]] || fail "INFERENCE_MAX_TOKENS must be a positive integer"
 
-kubectl_args=()
-if [[ -n "$kube_context" ]]; then
-  kubectl_args=(--context "$kube_context")
-fi
-
 keycloak_url=$(
-  kubectl "${kubectl_args[@]}" get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
+  kubectl get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
     -o jsonpath='{.data.KEYCLOAK_PUBLIC_URL}' | base64 -d
 )
 client_secret=$(
-  kubectl "${kubectl_args[@]}" get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
+  kubectl get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
     -o jsonpath='{.data.KEYCLOAK_CLIENT_SECRET}' | base64 -d
 )
 if [[ -z "$redirect_uri" ]]; then
   redirect_uri=$(
-    kubectl "${kubectl_args[@]}" get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
+    kubectl get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
       -o jsonpath='{.data.KEYCLOAK_REDIRECT_URI}' | base64 -d
   )
 fi
 password=$(
-  kubectl "${kubectl_args[@]}" get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
+  kubectl get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
     -o jsonpath="{.data.$password_key}" | base64 -d
 )
 
@@ -142,8 +137,12 @@ keycloak_url="${keycloak_url%/}"
 if [[ -n "${GATEWAY_HOST:-}" ]]; then
   gateway_host="$GATEWAY_HOST"
 else
+  gateway_kubectl_args=()
+  if [[ -n "$gateway_kube_context" ]]; then
+    gateway_kubectl_args=(--context "$gateway_kube_context")
+  fi
   gateway_host=$(
-    kubectl "${kubectl_args[@]}" get gateway "$gateway_name" -n "$gateway_namespace" \
+    kubectl "${gateway_kubectl_args[@]}" get gateway "$gateway_name" -n "$gateway_namespace" \
       -o jsonpath='{.status.addresses[0].value}'
   )
 fi
