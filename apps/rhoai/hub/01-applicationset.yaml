@@ -69,6 +69,17 @@ spec:
             parameters:
               - name: siteName
                 value: '{{ .name }}'
+        # The file is required: the chart has no enable switch.
+        - repoURL: https://github.com/pierDipi/odh-gitops.git
+          targetRevision: c1be9382ef7da230d4fd3ba003d42e443804c81e
+          path: charts/rhai-on-openshift-chart/charts/praxis-gateway
+          helm:
+            releaseName: grid-provider-gateway
+            valueFiles:
+              - $values/apps/rhoai/provider-gateway-{{ .name }}.yaml
+            parameters:
+              - name: grid.siteName
+                value: '{{ .name }}'
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           path: apps/rhoai/catalog
