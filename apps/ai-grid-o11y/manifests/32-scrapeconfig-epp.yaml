@@ -1,0 +1,18 @@
+# The scheduler's series, which the dashboard's pool rows read.
+apiVersion: monitoring.rhobs/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: epp-metrics
+  namespace: open-cluster-management-observability
+  labels:
+    app.kubernetes.io/component: user-workload-metrics-collector
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  jobName: epp-metrics
+  metricsPath: /metrics
+  scrapeInterval: 30s
+  scheme: HTTP
+  staticConfigs:
+    - targets:
+        - facebook-opt-125m-epp-service.ai-grid-internal-models.svc:9090
