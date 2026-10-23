@@ -40,6 +40,11 @@ spec:
                 value: '{{ eq .name "local-cluster" | toString }}'
               - name: praxis-gateway.grid.siteName
                 value: '{{ .name }}'
+              # OSD ships these namespaces; a self-managed spoke has no creator.
+              - name: operator.rhoai.olm.createNamespace
+                value: '{{ ne .name "local-cluster" | toString }}'
+              - name: dependencies.loki.olm.createNamespace
+                value: '{{ ne .name "local-cluster" | toString }}'
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           path: apps/rhoai/manifests
