@@ -7,7 +7,10 @@ metadata:
     argocd.argoproj.io/sync-wave: "5"
 spec:
   instanceSize: minimal
-  observabilityAddonSpec: {}
+  observabilityAddonSpec:
+    # The grid relays signals every five seconds, so a 300 second default cannot
+    # resolve a relay cycle in any rate window.
+    interval: 60
   storageConfig:
     metricObjectStorage:
       name: thanos-object-storage

@@ -1,0 +1,5533 @@
+# Vendored from hexfusion/experiments e99a5931d,
+# llm-d/ai-grid/gitops/observability/acm/65-dashboard-routing-tuning.yaml.
+# Generated there by observability/dashboards/routing_tuning.py: edit the script
+# in that repo and re-vendor, never this file.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-ai-grid-routing-tuning
+  namespace: open-cluster-management-observability
+  labels:
+    grafana-custom-dashboard: "true"
+  annotations:
+    observability.open-cluster-management.io/dashboard-folder: AI Grid
+    argocd.argoproj.io/sync-wave: "5"
+data:
+  ai-grid-routing-tuning.json: |
+    {
+      "title": "AI Grid routing tuning",
+      "uid": "ai-grid-routing-tuning",
+      "schemaVersion": 39,
+      "version": 1,
+      "editable": true,
+      "tags": [
+        "ai-grid",
+        "routing"
+      ],
+      "timezone": "browser",
+      "refresh": "1m",
+      "time": {
+        "from": "now-3h",
+        "to": "now"
+      },
+      "description": "Where requests went, what the decider read, whether to trust it, and what it cost. Hub samples arrive every 60 s; point the datasource at a cluster's own querier for the fine view.",
+      "annotations": {
+        "list": [
+          {
+            "name": "Serving config reload",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource}"
+            },
+            "enable": true,
+            "iconColor": "blue",
+            "expr": "sum by (cluster, result) (increase(grid_serving_config_reload_total{cluster=~\"$cluster\"}[2m])) > 0",
+            "titleFormat": "serving config reload",
+            "textFormat": "{{cluster}} {{result}}",
+            "step": "60s"
+          },
+          {
+            "name": "Gateway pod started",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource}"
+            },
+            "enable": true,
+            "iconColor": "orange",
+            "expr": "count by (cluster, pod) (up{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}) unless count by (cluster, pod) (up{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"} offset 2m)",
+            "titleFormat": "gateway pod started",
+            "textFormat": "{{cluster}} {{pod}}",
+            "step": "60s"
+          },
+          {
+            "name": "EPP pod started",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource}"
+            },
+            "enable": true,
+            "iconColor": "purple",
+            "expr": "count by (cluster, pod) (llm_d_epp_info{cluster=~\"$cluster\"}) unless count by (cluster, pod) (llm_d_epp_info{cluster=~\"$cluster\"} offset 2m)",
+            "titleFormat": "EPP pod started",
+            "textFormat": "{{cluster}} {{pod}}",
+            "step": "60s"
+          }
+        ]
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "datasource",
+            "type": "datasource",
+            "query": "prometheus",
+            "label": "Datasource",
+            "current": {},
+            "hide": 0
+          },
+          {
+            "name": "cluster",
+            "type": "query",
+            "label": "Cluster",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource}"
+            },
+            "query": {
+              "query": "label_values(up, cluster)",
+              "refId": "cluster"
+            },
+            "definition": "label_values(up, cluster)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "refresh": 2,
+            "sort": 1,
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            }
+          },
+          {
+            "name": "site",
+            "type": "query",
+            "label": "Grid site",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource}"
+            },
+            "query": {
+              "query": "label_values(grid_route_site_weight, site)",
+              "refId": "site"
+            },
+            "definition": "label_values(grid_route_site_weight, site)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "refresh": 2,
+            "sort": 1,
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            }
+          },
+          {
+            "name": "pool",
+            "type": "query",
+            "label": "Pool",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource}"
+            },
+            "query": {
+              "query": "label_values(vllm:num_requests_running, namespace)",
+              "refId": "pool"
+            },
+            "definition": "label_values(vllm:num_requests_running, namespace)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "refresh": 2,
+            "sort": 1,
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            }
+          }
+        ]
+      },
+      "panels": [
+        {
+          "type": "row",
+          "title": "Verdict",
+          "id": 1,
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "panels": []
+        },
+        {
+          "type": "stat",
+          "title": "Decided per second",
+          "description": "Requests the grid gateways decided, every reason.",
+          "id": 2,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 0,
+            "y": 1
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "decimals": 2,
+              "noValue": "none",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "text",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(sum by (cluster) (rate(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\"}[$__rate_interval])))",
+              "legendFormat": "",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Refused",
+          "description": "Share of decisions that refused the request: not ready, no route, bad request or shed.",
+          "id": 3,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 3,
+            "y": 1
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "decimals": 2,
+              "noValue": "none",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.01
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(sum by (cluster) (rate(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"not_ready|no_route|bad_request|shed\"}[$__rate_interval]))) / sum(sum by (cluster) (rate(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\"}[$__rate_interval])))",
+              "legendFormat": "",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Fallback",
+          "description": "Share of decisions sent to a candidate only because no healthy one was left.",
+          "id": 4,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 6,
+            "y": 1
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "decimals": 2,
+              "noValue": "none",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 0.01
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(sum by (cluster) (rate(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=\"fallback\"}[$__rate_interval]))) / sum(sum by (cluster) (rate(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\"}[$__rate_interval])))",
+              "legendFormat": "",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Oldest reading",
+          "description": "The oldest sample any candidate's decision read. A rising value is a frozen input. Empty (NaN) until the gateway learns this candidate's capacity, which it does only when the operator relays grid_provider_config_generation with provider_uid, publisher_epoch, batch_sequence and batch_samples: an operator built from grid #386 or later.",
+          "id": 5,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 9,
+            "y": 1
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 1,
+              "noValue": "none",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 17
+                  },
+                  {
+                    "color": "red",
+                    "value": 60
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "max(grid_route_site_reading_age_seconds{cluster=~\"$cluster\",site=~\"$site\"})",
+              "legendFormat": "",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Candidates full",
+          "description": "Candidates with a backlog at their ceiling long enough to shed. Empty (NaN) until the gateway learns this candidate's capacity, which it does only when the operator relays grid_provider_config_generation with provider_uid, publisher_epoch, batch_sequence and batch_samples: an operator built from grid #386 or later.",
+          "id": 6,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 12,
+            "y": 1
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "decimals": 0,
+              "noValue": "none",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "count(grid_route_site_full{cluster=~\"$cluster\",site=~\"$site\"} == 1) or vector(0)",
+              "legendFormat": "",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Models shedding",
+          "description": "Models the gateway sheds right now. The series appears with the first shed.",
+          "id": 7,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 15,
+            "y": 1
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "decimals": 0,
+              "noValue": "none",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "count(grid_route_shedding{cluster=~\"$cluster\"} == 1) or vector(0)",
+              "legendFormat": "",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Candidates failing",
+          "description": "How many candidates returned at least one error and not one 2xx in the last 10 minutes. A count over a rolling window, not a latch: it drops when the candidate succeeds again or its errors age out. Slow candidates do not count; requests still in flight are neither.",
+          "id": 8,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 18,
+            "y": 1
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "decimals": 0,
+              "noValue": "none",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "count((((sum by (cluster, backend) (increase(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=~\"4xx|5xx\"}[10m]))) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})) > 0) unless on (cluster, backend) (sum by (cluster, backend) (increase(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=\"2xx\"}[10m])) > 0)) or vector(0)",
+              "legendFormat": "",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Worst TTFT p95",
+          "description": "The slowest pool's p95 time to first token.",
+          "id": 9,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 21,
+            "y": 1
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 2,
+              "noValue": "none",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "text",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "max(histogram_quantile(0.95, sum by (le, cluster, namespace) (rate(vllm:time_to_first_token_seconds_bucket{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval]))))",
+              "legendFormat": "",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "Where requests went",
+          "id": 10,
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 5
+          },
+          "panels": []
+        },
+        {
+          "type": "timeseries",
+          "title": "Routed per candidate",
+          "description": "Requests each gateway sent to each candidate, routed and fallback.",
+          "id": 11,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 6
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 25,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "normal"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, site, backend) (rate(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__rate_interval])), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{site}} / {{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Achieved share against target",
+          "description": "Solid: the share each candidate got. Dashed: its capacity share, the by_capacity target. Dotted: capacity over 1 + rho, the between_two target (clamped to 0.1 to 0.9). With three or more candidates (two_choices) the achieved share should sit between the two, nearer the dotted line as the spread in rho grows.",
+          "id": 12,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 6
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "max": 1
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "C"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        2,
+                        4
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, site, backend) (rate(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__rate_interval])) / on (cluster) group_left sum by (cluster) (sum by (cluster, site, backend) (rate(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__rate_interval]))), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} achieved",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace((avg by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"} >= 0) or on (cluster, site, backend) (group by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"}) * on (cluster) group_left avg by (cluster) (avg by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"} >= 0))) or on (cluster, site, backend) group by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"})) / on (cluster) group_left sum by (cluster) ((avg by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"} >= 0) or on (cluster, site, backend) (group by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"}) * on (cluster) group_left avg by (cluster) (avg by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"} >= 0))) or on (cluster, site, backend) group by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"}))), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} capacity share",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(((avg by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"} >= 0) or on (cluster, site, backend) (group by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"}) * on (cluster) group_left avg by (cluster) (avg by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"} >= 0))) or on (cluster, site, backend) group by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"})) / (1 + avg by (cluster, site, backend) ((grid_route_site_rho{cluster=~\"$cluster\",site=~\"$site\"} >= 0) or (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"} * 0)))) / on (cluster) group_left sum by (cluster) (((avg by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"} >= 0) or on (cluster, site, backend) (group by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"}) * on (cluster) group_left avg by (cluster) (avg by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"} >= 0))) or on (cluster, site, backend) group by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"})) / (1 + avg by (cluster, site, backend) ((grid_route_site_rho{cluster=~\"$cluster\",site=~\"$site\"} >= 0) or (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"} * 0))))), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} capacity / (1 + rho)",
+              "refId": "C",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Decisions by reason",
+          "description": "Every outcome the gateway records. Refusals carry an empty site.",
+          "id": 13,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 16
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 25,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "normal"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum by (reason) (rate(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\"}[$__rate_interval]))",
+              "legendFormat": "{{reason}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Draw arm share",
+          "description": "Share of each gateway's decisions by the arm that made them, each arm its own line. two_choices: three or more candidates with room, the less saturated of two capacity-weighted draws; a stage where it is not the main arm does not exercise the selection logic. between_two: two with room, capacity over 1 + rho. lone: one with room, from backlog exclusion or a sticky prefix. by_capacity: none with room, or a candidate with no saturation reading.",
+          "id": 14,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 16
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "max": 1
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, path) (rate(grid_route_selections_total{cluster=~\"$cluster\"}[$__rate_interval])) / on (cluster) group_left sum by (cluster) (sum by (cluster, path) (rate(grid_route_selections_total{cluster=~\"$cluster\"}[$__rate_interval]))), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{path}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Draw arm taken",
+          "description": "Decisions per second by arm, stacked: the volume behind the shares beside it.",
+          "id": 15,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 26
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 25,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "normal"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, path) (rate(grid_route_selections_total{cluster=~\"$cluster\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{path}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Prefix affinity",
+          "description": "Prefix-affinity outcomes. sticky sends a prefix back to the candidate that served it, which narrows the draw to one (the lone arm). no_match: a prefix seen for the first time. not_applicable: a prompt shorter than one 256-byte block.",
+          "id": 16,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 26
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 25,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "normal"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, outcome) (rate(grid_route_prefix_affinity_total{cluster=~\"$cluster\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{outcome}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Completions per pool",
+          "description": "vLLM completions per pool: the cross-check of the routed share.",
+          "id": 17,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 36
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 25,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "normal"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (rate(vllm:request_success_total{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "What came back, per candidate",
+          "id": 18,
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 46
+          },
+          "panels": []
+        },
+        {
+          "type": "table",
+          "title": "Per candidate over the selected range",
+          "description": "Counted exactly per gateway pod over the whole time range. Share is of decisions. Success is 2xx over finished responses, so requests still in flight count as neither. Errors are 4xx and 5xx the gateway returned. Aborted counts requests the pool's vLLM ended because the client went away, which the gateway records no status for. Set the time range to the run window.",
+          "id": 19,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 47
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum by (candidate) (label_replace(label_replace(sum by (cluster, backend) (((max_over_time(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__range]) - min_over_time(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__range])) and (grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"} offset $__range)) or (max_over_time(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__range]) unless (grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"} offset $__range))), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\"))",
+              "refId": "A",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum by (candidate) (label_replace(label_replace(sum by (cluster, backend) (((max_over_time(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__range]) - min_over_time(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__range])) and (grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"} offset $__range)) or (max_over_time(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__range]) unless (grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"} offset $__range))) / on (cluster) group_left sum by (cluster) (sum by (cluster, backend) (((max_over_time(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__range]) - min_over_time(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__range])) and (grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"} offset $__range)) or (max_over_time(grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}[$__range]) unless (grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"} offset $__range)))), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\"))",
+              "refId": "B",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum by (candidate) (label_replace(label_replace(((sum by (cluster, backend) (((max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range]) - min_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range])) and (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"} offset $__range)) or (max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range]) unless (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"} offset $__range)))) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\"))",
+              "refId": "C",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum by (candidate) (label_replace(label_replace(((sum by (cluster, backend) (((max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=~\"4xx|5xx\"}[$__range]) - min_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=~\"4xx|5xx\"}[$__range])) and (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=~\"4xx|5xx\"} offset $__range)) or (max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=~\"4xx|5xx\"}[$__range]) unless (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=~\"4xx|5xx\"} offset $__range)))) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})) or on (cluster, backend) (((sum by (cluster, backend) (((max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range]) - min_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range])) and (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"} offset $__range)) or (max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range]) unless (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"} offset $__range)))) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})) * 0), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\"))",
+              "refId": "D",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum by (candidate) (label_replace(sum by (namespace) (((max_over_time(vllm:request_success_total{cluster=~\"$cluster\",finished_reason=\"abort\"}[$__range]) - min_over_time(vllm:request_success_total{cluster=~\"$cluster\",finished_reason=\"abort\"}[$__range])) and (vllm:request_success_total{cluster=~\"$cluster\",finished_reason=\"abort\"} offset $__range)) or (max_over_time(vllm:request_success_total{cluster=~\"$cluster\",finished_reason=\"abort\"}[$__range]) unless (vllm:request_success_total{cluster=~\"$cluster\",finished_reason=\"abort\"} offset $__range))), \"candidate\", \"$1\", \"namespace\", \"(.*)\")) or on (candidate) (sum by (candidate) (label_replace(label_replace(((sum by (cluster, backend) (((max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range]) - min_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range])) and (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"} offset $__range)) or (max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range]) unless (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"} offset $__range)))) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")) * 0)",
+              "refId": "E",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum by (candidate) (label_replace(label_replace(((sum by (cluster, backend) (((max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=\"2xx\"}[$__range]) - min_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=\"2xx\"}[$__range])) and (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=\"2xx\"} offset $__range)) or (max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=\"2xx\"}[$__range]) unless (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=\"2xx\"} offset $__range)))) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})) / on (cluster, backend) (((sum by (cluster, backend) (((max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range]) - min_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range])) and (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"} offset $__range)) or (max_over_time(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__range]) unless (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"} offset $__range)))) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})) > 0), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\"))",
+              "refId": "F",
+              "instant": true,
+              "range": false,
+              "format": "table"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "cluster": true,
+                  "backend": true,
+                  "namespace": true
+                },
+                "indexByName": {
+                  "candidate": 0,
+                  "Decisions": 1,
+                  "Share": 2,
+                  "Finished": 3,
+                  "Errors": 4,
+                  "Aborted": 5,
+                  "Success": 6
+                },
+                "renameByName": {
+                  "Value #A": "Decisions",
+                  "Value #B": "Share",
+                  "Value #C": "Finished",
+                  "Value #D": "Errors",
+                  "Value #E": "Aborted",
+                  "Value #F": "Success",
+                  "candidate": "Candidate"
+                }
+              }
+            },
+            {
+              "id": "sortBy",
+              "options": {
+                "sort": [
+                  {
+                    "field": "Candidate"
+                  }
+                ]
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "noValue": "0",
+              "custom": {
+                "align": "auto"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Decisions"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "none"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Share"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percentunit"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Finished"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "none"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Errors"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "none"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-text"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "text",
+                          "value": null
+                        },
+                        {
+                          "color": "red",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Aborted"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "none"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-text"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "text",
+                          "value": null
+                        },
+                        {
+                          "color": "red",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Success"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percentunit"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 1
+                  },
+                  {
+                    "id": "noValue",
+                    "value": "none finished"
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background",
+                      "mode": "basic"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "transparent",
+                          "value": null
+                        },
+                        {
+                          "color": "red",
+                          "value": 0
+                        },
+                        {
+                          "color": "orange",
+                          "value": 0.9
+                        },
+                        {
+                          "color": "green",
+                          "value": 0.99
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm"
+          }
+        },
+        {
+          "type": "stat",
+          "title": "Requests unaccounted",
+          "description": "Per gateway pod, requests it decided minus those it finished minus those still in flight, summed. 0 means every routed request is accounted for. Above 0, requests ended without any response the gateway counted, such as a client that gave up. Since each pod started.",
+          "id": 20,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 4,
+            "w": 24,
+            "x": 0,
+            "y": 54
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "decimals": 0,
+              "noValue": "none",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 10
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "area",
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum(sum by (cluster, pod) (grid_route_decisions_total{cluster=~\"$cluster\",site=~\"$site\",reason=~\"routed|fallback\"}) - sum by (cluster, pod) (praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"} and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})) - sum by (cluster, pod) (praxis_http_active_requests{listener=\"gateway\",cluster=~\"$cluster\"}))",
+              "legendFormat": "",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Responses per candidate by status class",
+          "description": "What the gateway returned for requests it sent to each candidate. 5xx includes the gateway's own failures, such as a backend missing from its config. 4xx folds 401, 404 and 429 together.",
+          "id": 21,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 58
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 25,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "normal"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(((sum by (cluster, backend, status_class) (rate(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__rate_interval]))) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} {{status_class}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Success ratio per candidate",
+          "description": "2xx over all finished responses, per candidate, per window. Requests in flight are not counted. Empty where a window finished none.",
+          "id": 22,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 58
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "max": 1
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(((sum by (cluster, backend) (rate(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=\"2xx\"}[$__rate_interval])) / on (cluster, backend) (sum by (cluster, backend) (rate(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\"}[$__rate_interval])) > 0)) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Gateway failures per candidate",
+          "description": "5xx responses per candidate. Any line above zero is a broken path.",
+          "id": 23,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 68
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no failures",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(((sum by (cluster, backend) (rate(praxis_http_requests_total{job=\"grid-gateway-metrics\",cluster=~\"$cluster\",status_class=\"5xx\"}[$__rate_interval]))) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "What the decider read, per candidate",
+          "id": 24,
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 78
+          },
+          "panels": []
+        },
+        {
+          "type": "timeseries",
+          "title": "Saturation used (rho), window average",
+          "description": "Saturation the draw weighs: the nearest limit. Averaged over each window: at low concurrency a candidate holds one to three requests, so single samples jump between zero and a spike.",
+          "id": 25,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 79
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisSoftMax": 1
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "unmeasured"
+                    }
+                  }
+                }
+              ],
+              "min": 0
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (avg_over_time(grid_route_site_rho{cluster=~\"$cluster\",site=~\"$site\"}[$__rate_interval])), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{site}} / {{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Saturation reported and counted",
+          "description": "Solid: what the site reports (KV utilization plus pod spread). Dashed: in flight over ceiling, a reading only once a hard bound exists. rho follows whichever is nearer its limit. Empty (NaN) until the gateway learns this candidate's capacity, which it does only when the operator relays grid_provider_config_generation with provider_uid, publisher_epoch, batch_sequence and batch_samples: an operator built from grid #386 or later.",
+          "id": 26,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 79
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisSoftMax": 1
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "unmeasured"
+                    }
+                  }
+                }
+              ],
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (avg_over_time(grid_route_site_rho_reported{cluster=~\"$cluster\",site=~\"$site\"}[$__rate_interval])), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} reported",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_rho_counted{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} counted",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Weight (capacity after explore floor)",
+          "description": "Capacity the draw weights by, after the explore floor. Empty (NaN) until the gateway learns this candidate's capacity, which it does only when the operator relays grid_provider_config_generation with provider_uid, publisher_epoch, batch_sequence and batch_samples: an operator built from grid #386 or later.",
+          "id": 27,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 89
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "unmeasured"
+                    }
+                  }
+                }
+              ]
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_weight{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{site}} / {{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Ceilings",
+          "description": "Solid: the ceiling a count is read against. Dashed: soft, most carried with nothing waiting. Dotted: hard, fewest held at a limit. Empty (NaN) until the gateway learns this candidate's capacity, which it does only when the operator relays grid_provider_config_generation with provider_uid, publisher_epoch, batch_sequence and batch_samples: an operator built from grid #386 or later.",
+          "id": 28,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 89
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "unmeasured"
+                    }
+                  }
+                }
+              ]
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "C"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        2,
+                        4
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_ceiling{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} ceiling",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_ceiling_soft{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} soft",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_ceiling_hard{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} hard",
+              "refId": "C",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "In flight per candidate",
+          "description": "Solid: requests in flight at the candidate as the operator relays them, live today. Dashed: the same count as the gateway reads it for the decision. Dotted: the ceiling it is read against. The dashed and dotted lines are empty until the gateway learns capacity, which needs the operator to relay grid_provider_config_generation with its identity labels (grid #386 or later).",
+          "id": 29,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 99
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "unmeasured"
+                    }
+                  }
+                }
+              ]
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "C"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        2,
+                        4
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(label_replace(max by (cluster, grid_provider) (grid_provider_in_flight_requests{cluster=~\"$cluster\"}) and on (cluster) group by (cluster) (grid_route_decisions_total), \"backend\", \"$1\", \"grid_provider\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} relayed",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_in_flight{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} gateway",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_ceiling{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} ceiling",
+              "refId": "C",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Load over the ceiling, unclamped",
+          "description": "In flight over the ceiling it is read against, per candidate, without the clamp at 1 that counted saturation applies. Above 1 the candidate holds more than its ceiling: counted saturation reads 1.0 there whether it holds one request over or twice the ceiling, and routing excludes it either way. Empty (NaN) until the gateway learns this candidate's capacity, which it does only when the operator relays grid_provider_config_generation with provider_uid, publisher_epoch, batch_sequence and batch_samples: an operator built from grid #386 or later.",
+          "id": 30,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 99
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisSoftMax": 1
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "unmeasured"
+                    }
+                  }
+                }
+              ],
+              "min": 0
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_in_flight{cluster=~\"$cluster\",site=~\"$site\"}) / on (cluster, site, backend) avg by (cluster, site, backend) (grid_route_site_ceiling{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{site}} / {{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Clamped share of counted saturation",
+          "description": "Share of samples in each window where counted saturation sat at exactly 1.0. While it is high the decider cannot tell busy candidates apart: every one of them reads full. Empty (NaN) until the gateway learns this candidate's capacity, which it does only when the operator relays grid_provider_config_generation with provider_uid, publisher_epoch, batch_sequence and batch_samples: an operator built from grid #386 or later.",
+          "id": 31,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 109
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "unmeasured"
+                    }
+                  }
+                }
+              ],
+              "min": 0,
+              "max": 1
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (avg_over_time((grid_route_site_rho_counted{cluster=~\"$cluster\",site=~\"$site\"} == bool 1)[$__rate_interval:])), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{site}} / {{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Queue score",
+          "description": "Window-worst EPP queue depth the candidate ranks by. Gap: excluded or demoted.",
+          "id": 32,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 109
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "unmeasured"
+                    }
+                  }
+                }
+              ]
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_score{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{site}} / {{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Reading age",
+          "description": "Age of the sample the decision read. A line that climbs is a frozen input, not a steady one. Empty (NaN) until the gateway learns this candidate's capacity, which it does only when the operator relays grid_provider_config_generation with provider_uid, publisher_epoch, batch_sequence and batch_samples: an operator built from grid #386 or later. The age is lost on the fallback path too, which is a gateway gap.",
+          "id": 33,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 119
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "unmeasured"
+                    }
+                  }
+                }
+              ]
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_reading_age_seconds{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{site}} / {{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "state-timeline",
+          "title": "Full",
+          "description": "1 while the candidate has a backlog at its ceiling long enough to shed. Empty (NaN) until the gateway learns this candidate's capacity, which it does only when the operator relays grid_provider_config_generation with provider_uid, publisher_epoch, batch_sequence and batch_samples: an operator built from grid #386 or later.",
+          "id": 34,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 5,
+            "w": 24,
+            "x": 0,
+            "y": 129
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": {
+                      "text": "room",
+                      "color": "green"
+                    },
+                    "1": {
+                      "text": "full",
+                      "color": "red"
+                    }
+                  }
+                },
+                {
+                  "type": "special",
+                  "options": {
+                    "match": "nan",
+                    "result": {
+                      "text": "unmeasured"
+                    }
+                  }
+                }
+              ],
+              "noValue": "no data",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showValue": "never",
+            "mergeValues": true,
+            "rowHeight": 0.8
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, site, backend) (grid_route_site_full{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "Can the inputs be trusted",
+          "id": 35,
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 134
+          },
+          "panels": []
+        },
+        {
+          "type": "timeseries",
+          "title": "Gateway polls of its operator",
+          "description": "Result of each poll of the local operator's signals.",
+          "id": 36,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 135
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, result) (rate(grid_signals_poll_total{cluster=~\"$cluster\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{result}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Since last successful poll",
+          "description": "Seconds since any gateway in the cluster last read its operator. Newest across pods, so a replaced pod does not read as a frozen poll while its last sample lingers.",
+          "id": 37,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 135
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(time() - max by (cluster) (grid_signals_last_success_timestamp_seconds{cluster=~\"$cluster\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Signal rows refused and feedback failures",
+          "description": "Rows the gateway refused, by reason, and failed feedback deliveries to the operator, by reason.",
+          "id": 38,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 145
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum by (reason) (rate(grid_signals_ingest_dropped_total{cluster=~\"$cluster\"}[$__rate_interval]))",
+              "legendFormat": "dropped {{reason}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "sum by (reason) (rate(grid_signals_feedback_failures_total{cluster=~\"$cluster\"}[$__rate_interval]))",
+              "legendFormat": "feedback {{reason}}",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Provider scrapes by result",
+          "description": "The operator's scrapes of each provider's EPP.",
+          "id": 39,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 145
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, grid_provider, result) (rate(grid_provider_scrape_total{cluster=~\"$cluster\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{grid_provider}} {{result}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Since last provider scrape",
+          "description": "Seconds since the operator last scraped each provider.",
+          "id": 40,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 155
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(time() - max by (cluster, grid_provider) (grid_provider_last_scrape_success_timestamp_seconds{cluster=~\"$cluster\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{grid_provider}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Provider ready endpoints",
+          "description": "Endpoints each provider reports ready, as the operator relays it.",
+          "id": 41,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 155
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, grid_provider) (grid_provider_ready_endpoints{cluster=~\"$cluster\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{grid_provider}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Site silent",
+          "description": "1 while the gateway has no fresh signal sample for the site and routes around it. A silence shorter than the hub's 60 s sample can fall between samples; the transitions panel keeps it.",
+          "id": 42,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 8,
+            "x": 0,
+            "y": 165
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                },
+                "lineInterpolation": "stepAfter"
+              },
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": {
+                      "text": "live"
+                    },
+                    "1": {
+                      "text": "silent"
+                    }
+                  }
+                }
+              ],
+              "min": 0,
+              "max": 1
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "max by (cluster, site) (grid_route_site_silent{cluster=~\"$cluster\",site=~\"$site\"})",
+              "legendFormat": "{{site}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Since last signal sample",
+          "description": "Age of the newest signal sample the gateway holds for the site. It climbs from the moment the site stops answering, before the site is marked silent.",
+          "id": 43,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 8,
+            "x": 8,
+            "y": 165
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "max by (cluster, site) (grid_route_site_last_sample_age_seconds{cluster=~\"$cluster\",site=~\"$site\"})",
+              "legendFormat": "{{site}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Silent and live transitions",
+          "description": "Times the gateway marked each site silent or live in each window. A counter, so a silence too short for a hub sample still shows here.",
+          "id": 44,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 8,
+            "x": 16,
+            "y": 165
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 25,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                },
+                "drawStyle": "bars"
+              },
+              "mappings": [],
+              "min": 0
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "max by (cluster, site, to) (increase(grid_route_site_silent_transitions_total{cluster=~\"$cluster\",site=~\"$site\"}[$__rate_interval]))",
+              "legendFormat": "{{site}} {{to}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "Signal coverage across sites",
+          "id": 45,
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 175
+          },
+          "panels": []
+        },
+        {
+          "type": "timeseries",
+          "title": "Peer polls by outcome",
+          "description": "Each operator's polls of its peer sites' signals. The cluster is the poller, the peer is the site polled.",
+          "id": 46,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 176
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 25,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "normal"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, peer, outcome) (rate(grid_peer_poll_total{cluster=~\"$cluster\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} polls {{peer}}: {{outcome}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Since last peer poll success",
+          "description": "Seconds since each operator last read each peer. On the hub this includes up to about 90 s of collection delay, so read trends here and exact values on a cluster's own querier.",
+          "id": 47,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 176
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(time() - max by (cluster, peer) (grid_peer_last_success_timestamp_seconds{cluster=~\"$cluster\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} from {{peer}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Peer poll duration p95",
+          "description": "How long one poll of a peer took.",
+          "id": 48,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 186
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(histogram_quantile(0.95, sum by (le, cluster, peer) (rate(grid_peer_poll_duration_seconds_bucket{cluster=~\"$cluster\"}[$__rate_interval]))), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} polls {{peer}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Peer observations refused by reason",
+          "description": "Rows from a peer the operator's ingest refused, by reason. reason=name is a series the peer exports and this ingest does not admit, which can be steady and harmless.",
+          "id": 49,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 186
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "none refused",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, peer, reason) (rate(grid_peer_signals_refused_total{cluster=~\"$cluster\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} from {{peer}}: {{reason}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Signals relayed per provider (proposed)",
+          "description": "Solid: distinct series the operator relayed for each provider. Dashed: the median across its site's providers. A provider below its site median is missing inputs. Proposed in the signal coverage issue draft and not exported yet, so this panel reads 'not exported yet' until the operator publishes it.",
+          "id": 50,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 196
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "not exported yet",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, grid_site, grid_provider) (grid_provider_signal_series{cluster=~\"$cluster\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{grid_site}}/{{grid_provider}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(quantile by (cluster, grid_site) (0.5, grid_provider_signal_series{cluster=~\"$cluster\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{grid_site}} median",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Missing routing inputs per provider (proposed)",
+          "description": "Signals the last relay did not carry for each provider, by name. Any line above 0 is a provider the gateway reads on fewer inputs than it should. Proposed in the signal coverage issue draft and not exported yet, so this panel reads 'not exported yet' until the operator publishes it.",
+          "id": 51,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 196
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "not exported yet",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(count by (cluster, grid_site, grid_provider, signal) (grid_provider_signal_present{cluster=~\"$cluster\"} == 0), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{grid_provider}} missing {{signal}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Peer observations accepted (proposed)",
+          "description": "Share of each peer's observations the operator's ingest accepted. A steady share below 100% is expected where a peer exports names this ingest does not admit. Proposed in the signal coverage issue draft and not exported yet, so this panel reads 'not exported yet' until the operator publishes it.",
+          "id": 52,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 206
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "not exported yet",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "max": 1
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, peer) (rate(grid_peer_signals_accepted_total{cluster=~\"$cluster\"}[$__rate_interval])) / on (cluster, peer) (sum by (cluster, peer) (rate(grid_peer_signals_accepted_total{cluster=~\"$cluster\"}[$__rate_interval])) + on (cluster, peer) sum by (cluster, peer) (rate(grid_peer_signals_refused_total{cluster=~\"$cluster\"}[$__rate_interval]))), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} from {{peer}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Signal age at the operator against at the gateway (proposed)",
+          "description": "Solid: age of each provider's newest sample as its operator relayed it (proposed). Dashed: the age the gateway read for the same candidate (exists today). The gap between them is the hop from operator to gateway; the solid line alone is scrape plus peer poll. Proposed in the signal coverage issue draft and not exported yet, so this panel reads 'not exported yet' until the operator publishes it.",
+          "id": 53,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 206
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "not exported yet",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(label_replace(max by (cluster, grid_provider) (grid_provider_signal_age_seconds{cluster=~\"$cluster\"}), \"backend\", \"$1\", \"grid_provider\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} at operator",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, site, backend) (grid_route_site_reading_age_seconds{cluster=~\"$cluster\",site=~\"$site\"}), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}} at gateway",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "What it cost, per pool",
+          "id": 54,
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 216
+          },
+          "panels": []
+        },
+        {
+          "type": "timeseries",
+          "title": "Time to first token",
+          "description": "Solid p50, dashed p95, per pool.",
+          "id": 55,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 217
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(histogram_quantile(0.5, sum by (le, cluster, namespace) (rate(vllm:time_to_first_token_seconds_bucket{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval]))), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} p50",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(histogram_quantile(0.95, sum by (le, cluster, namespace) (rate(vllm:time_to_first_token_seconds_bucket{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval]))), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} p95",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "End-to-end latency",
+          "description": "Solid p50, dashed p95, per pool.",
+          "id": 56,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 217
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(histogram_quantile(0.5, sum by (le, cluster, namespace) (rate(vllm:e2e_request_latency_seconds_bucket{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval]))), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} p50",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(histogram_quantile(0.95, sum by (le, cluster, namespace) (rate(vllm:e2e_request_latency_seconds_bucket{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval]))), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} p95",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Decode time p95",
+          "description": "Time spent generating after the first token, per pool.",
+          "id": 57,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 227
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(histogram_quantile(0.95, sum by (le, cluster, namespace) (rate(vllm:request_decode_time_seconds_bucket{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval]))), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Inter-token latency p95",
+          "description": "Per pool.",
+          "id": 58,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 227
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(histogram_quantile(0.95, sum by (le, cluster, namespace) (rate(vllm:inter_token_latency_seconds_bucket{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval]))), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Queue time mean",
+          "description": "Mean time a request waited in the pool before running.",
+          "id": 59,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 237
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (rate(vllm:request_queue_time_seconds_sum{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])) / sum by (cluster, namespace) (rate(vllm:request_queue_time_seconds_count{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Running and waiting",
+          "description": "Solid running, dashed waiting.",
+          "id": 60,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 237
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (vllm:num_requests_running{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} running",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (vllm:num_requests_waiting{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} waiting",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "KV cache usage",
+          "description": "Per pool.",
+          "id": 61,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 247
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "max": 1
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, namespace) (vllm:kv_cache_usage_perc{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Preemptions and failed requests",
+          "description": "Solid: preemptions, the cost of admitting past a pool's limit. Dashed: aborted or failed requests.",
+          "id": 62,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 247
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (rate(vllm:num_preemptions_total{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} preempted",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (rate(vllm:request_success_total{cluster=~\"$cluster\",namespace=~\"$pool\",finished_reason=~\"abort|error\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} failed",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Gateway mean latency per candidate",
+          "description": "The gateway's own request duration per candidate. A summary, so a mean, not a quantile.",
+          "id": 63,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 257
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(((sum by (cluster, backend) (rate(praxis_http_request_duration_seconds_sum{cluster=~\"$cluster\"}[$__rate_interval])) / sum by (cluster, backend) (rate(praxis_http_request_duration_seconds_count{cluster=~\"$cluster\"}[$__rate_interval]))) and on (cluster, backend) group by (cluster, backend) (grid_route_decisions_total{cluster=~\"$cluster\"})), \"candidate\", \"$1\", \"backend\", \"(.*)\"), \"candidate\", \"$1\", \"backend\", \"grid-(.+)-[^-]+-[^-]+-[0-9a-f]{16,}\")",
+              "legendFormat": "{{candidate}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Tokens per second",
+          "description": "Solid, left axis: generated. Dashed, right axis: prompt tokens read. Per pool.",
+          "id": 64,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 257
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "right"
+                  },
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (rate(vllm:generation_tokens_total{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} generated",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (rate(vllm:prompt_tokens_total{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} prompt",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Gateway responses by status class",
+          "description": "Every response the grid gateways returned. 4xx collapses 401, 404 and 429 into one class.",
+          "id": 65,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 267
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 25,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "normal"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, status_class) (rate(praxis_http_requests_total{cluster=~\"$cluster\",job=\"grid-gateway-metrics\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} {{status_class}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "Inside each pool (EPP)",
+          "id": 66,
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 277
+          },
+          "panels": []
+        },
+        {
+          "type": "timeseries",
+          "title": "Queue",
+          "description": "Solid: the pool average. Dashed: the spread across its endpoints, which stays 0 while a pool runs one endpoint.",
+          "id": 67,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 278
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, namespace) (llm_d_epp_average_queue_size{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} average",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, namespace) (llm_d_epp_std_dev_queue_size{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} spread",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "KV cache",
+          "description": "Solid: the pool average. Dashed: the spread across its endpoints, which stays 0 while a pool runs one endpoint.",
+          "id": 68,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 278
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "max": 1
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, namespace) (llm_d_epp_average_kv_cache_utilization{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} average",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, namespace) (llm_d_epp_std_dev_kv_cache_utilization{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} spread",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Running",
+          "description": "Solid: the pool average. Dashed: the spread across its endpoints, which stays 0 while a pool runs one endpoint.",
+          "id": 69,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 288
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, namespace) (llm_d_epp_average_running_requests{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} average",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, namespace) (llm_d_epp_std_dev_running_requests{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} spread",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Ready endpoints and EPP poll errors",
+          "description": "Solid, left axis: endpoints whose last EPP scrape is fresh, not ready pods. Dashed, right axis: the EPP's failed scrapes of its endpoints in each window.",
+          "id": 70,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 288
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "right"
+                  },
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, namespace) (llm_d_epp_ready_endpoints{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} ready",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (increase(llm_d_epp_datalayer_poll_errors_total{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} poll errors",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Prefix cache hit ratio",
+          "description": "Prompt tokens served from the prefix cache, per pool.",
+          "id": 71,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 298
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "max": 1
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (rate(vllm:prefix_cache_hits_total{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])) / clamp_min(sum by (cluster, namespace) (rate(vllm:prefix_cache_queries_total{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])), 1e-9), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Prefix cache hits and misses",
+          "description": "Prompt tokens per second per pool. Solid, right axis: served from the prefix cache. Dashed, left axis: missed, queried minus hit, which the engine computed afresh. Separate axes, since misses run hundreds of times higher. Unique prompts read all miss.",
+          "id": 72,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 298
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "A"
+                },
+                "properties": [
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "right"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "fill": "dash",
+                      "dash": [
+                        10,
+                        6
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (rate(vllm:prefix_cache_hits_total{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} hit",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(sum by (cluster, namespace) (rate(vllm:prefix_cache_queries_total{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])) - sum by (cluster, namespace) (rate(vllm:prefix_cache_hits_total{cluster=~\"$cluster\",namespace=~\"$pool\"}[$__rate_interval])), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}} miss",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "EPP prefix index size",
+          "description": "Entries in each pool's EPP prefix index. The EPP indexes only requests it schedules, so this stays 0 while the gateway sends straight to each pool's vLLM Service and skips the EPP.",
+          "id": 73,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 308
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, namespace) (llm_d_epp_prefix_indexer_size{cluster=~\"$cluster\",namespace=~\"$pool\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{namespace}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "GPUs",
+          "id": 74,
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 318
+          },
+          "panels": []
+        },
+        {
+          "type": "timeseries",
+          "title": "GPU busy per pool",
+          "description": "Mean utilization of the GPUs each pool holds, from DCGM. A pool split across GPUs (TP2) averages them. Utilization is the share of time a kernel runs, not how hard it works.",
+          "id": 75,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 319
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "max": 100
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, exported_namespace) (DCGM_FI_DEV_GPU_UTIL{cluster=~\"$cluster\",exported_namespace!=\"\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{exported_namespace}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "GPU utilization",
+          "description": "Per GPU, labelled with the pool holding it. An unlabelled GPU is idle.",
+          "id": 76,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 319
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "max": 100
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(avg by (cluster, exported_namespace, gpu, modelName) (DCGM_FI_DEV_GPU_UTIL{cluster=~\"$cluster\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{exported_namespace}} gpu{{gpu}} {{modelName}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "GPU framebuffer used",
+          "description": "Per GPU, labelled with the pool holding it.",
+          "id": 77,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "interval": "2m",
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 329
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "decmbytes",
+              "noValue": "no data",
+              "custom": {
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "mean"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "expr": "label_replace(label_replace(max by (cluster, exported_namespace, gpu, modelName) (DCGM_FI_DEV_FB_USED{cluster=~\"$cluster\"}), \"at\", \"$1\", \"cluster\", \"(.+)\"), \"at\", \"dagobah\", \"cluster\", \"local-cluster\")",
+              "legendFormat": "{{at}} / {{exported_namespace}} gpu{{gpu}} {{modelName}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ]
+        }
+      ]
+    }
