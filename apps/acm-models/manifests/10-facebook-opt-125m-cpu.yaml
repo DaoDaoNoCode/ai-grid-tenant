@@ -11,7 +11,7 @@ spec:
   model:
     uri: hf://facebook/opt-125m
     name: facebook-opt-125m
-  replicas: 1
+  replicas: 3
   router:
     scheduler: { }
     route: { }
