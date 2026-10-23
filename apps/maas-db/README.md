@@ -16,6 +16,8 @@ automated deletion.
   `local-cluster`.
 - The `maas-db-rw` Service is exported through Submariner as
   `maas-db-rw.maas-db.svc.clusterset.local`.
+- Every remote database consumer must have the Submariner add-on; the ACM app
+  currently declares it for `local-cluster` and `ai-grid-2`.
 - Each remote cluster runs `maas-read`, a CloudNativePG replica cluster using
   `pg_basebackup` and continuous TLS streaming replication.
 - `local-cluster` exposes `maas-read-ro` as an ExternalName to its local
