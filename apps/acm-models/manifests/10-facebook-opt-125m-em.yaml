@@ -8,12 +8,6 @@ metadata:
 spec:
   externalProviderRefs:
     - apiFormat: openai-chat
-      path: /v1/chat/completions
-      ref:
-        name: grid-provider
-      targetModel: facebook/opt-125m
-      weight: 1
-    - apiFormat: openai-chat
       path: /v1/completions
       ref:
         name: grid-provider
