@@ -1,0 +1,24 @@
+{{- if not .Values.clusterName }}
+{{- fail "clusterName is required: the acm-submariner ApplicationSet sets it per cluster" }}
+{{- end }}
+apiVersion: addon.open-cluster-management.io/v1alpha1
+kind: ManagedClusterAddOn
+metadata:
+  name: submariner
+  namespace: {{ .Values.clusterName }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  installNamespace: {{ .Values.installNamespace }}
+---
+apiVersion: submarineraddon.open-cluster-management.io/v1alpha1
+kind: SubmarinerConfig
+metadata:
+  name: submariner
+  namespace: {{ .Values.clusterName }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  loadBalancerEnable: {{ .Values.loadBalancerEnable }}
+  gatewayConfig:
+    gateways: {{ .Values.gateways }}

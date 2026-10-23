@@ -1,0 +1,8 @@
+# -- Managed cluster name. Set per cluster by the acm-submariner ApplicationSet.
+clusterName: ""
+# -- Namespace where the Submariner operator is installed.
+installNamespace: submariner-operator
+# -- Use a load-balancer Service for the Submariner gateways.
+loadBalancerEnable: true
+# -- Number of gateway replicas.
+gateways: 2

@@ -22,7 +22,9 @@ in `openshift-gitops`.
 Submariner is configured for two gateways because cross-cluster connectivity
 is required by the shared database and model-serving topology. Each managed
 cluster therefore needs at least two pure worker Nodes.
-On ROSA, the gateways use a load-balancer Service instead of node ports.
+The `acm-submariner` ApplicationSet deploys the add-on and configuration on
+every managed cluster. On ROSA, the gateways use a load-balancer Service
+instead of node ports.
 
 ### Adding or removing an admin
 

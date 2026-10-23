@@ -1,0 +1,6 @@
+apiVersion: v2
+name: acm-submariner
+description: >
+  Installs the Submariner add-on and configuration for one managed cluster.
+type: application
+version: 0.1.0
