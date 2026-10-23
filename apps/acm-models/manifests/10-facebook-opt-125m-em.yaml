@@ -13,6 +13,12 @@ spec:
         name: grid-provider
       targetModel: facebook/opt-125m
       weight: 1
+    - apiFormat: openai-chat
+      path: /v1/completions
+      ref:
+        name: grid-provider
+      targetModel: facebook/opt-125m
+      weight: 1
 ---
 apiVersion: maas.opendatahub.io/v1alpha1
 kind: MaaSModelRef
