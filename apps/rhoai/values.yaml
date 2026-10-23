@@ -204,19 +204,9 @@ praxis-gateway:
       # MaaS authenticates the caller.
       auth:
         mode: none
-      backends:
-        # cluster must match candidates[].cluster in the serving config, and is
-        # generated from the source UID.
-        - cluster: grid-ai-grid-internal-models-fa5d29f44274630a4c1f0377cb458dfa16
-          endpoints:
-            - facebook-opt-125m-kserve-workload-svc.ai-grid-internal-models.svc.cluster.local.:8000
-          transport:
-            mode: tls
-            ca:
-              configMapName: openshift-service-ca.crt
-              key: service-ca.crt
-          # praxis refuses a name that resolves to a private address.
-          trustPrivate: true
+      # backends is per cluster, in values-<cluster>.yaml: the name the serving
+      # config uses hashes the local source UID. A cluster with no file of its
+      # own fails the render rather than inheriting another cluster's name.
       # Renders grid_site_route over the operator's serving data.
       gridServing:
         enabled: true

@@ -1,0 +1,17 @@
+# The serving config names this cluster's provider after a hash of the local
+# LLMInferenceService UID, and grid_site_route can only select a cluster it
+# declares, so the name is local to this file.
+praxis-gateway:
+  praxisConfig:
+    render:
+      backends:
+        - cluster: grid-ai-grid-internal-models-fa6be7f7aa89d053c2466c363fd2168872
+          endpoints:
+            - facebook-opt-125m-kserve-workload-svc.ai-grid-internal-models.svc.cluster.local.:8000
+          transport:
+            mode: tls
+            ca:
+              configMapName: openshift-service-ca.crt
+              key: service-ca.crt
+          # praxis refuses a name that resolves to a private address.
+          trustPrivate: true

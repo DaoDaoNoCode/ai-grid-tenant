@@ -33,8 +33,11 @@ spec:
           path: charts/rhai-on-openshift-chart
           helm:
             releaseName: rhai-on-openshift
+            # Every cluster carries its own backend, keyed by cluster name.
+            ignoreMissingValueFiles: true
             valueFiles:
               - $values/apps/rhoai/values.yaml
+              - $values/apps/rhoai/values-{{ .name }}.yaml
             parameters:
               - name: grid-enrollment.enabled
                 value: '{{ eq .name "local-cluster" | toString }}'
