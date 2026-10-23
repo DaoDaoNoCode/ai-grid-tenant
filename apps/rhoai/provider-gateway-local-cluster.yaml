@@ -1,4 +1,4 @@
-# Passthrough Route: terminating TLS drops the peer certificate the admission reads.
+# Peers dial this directly, so the SNI stays <site>.grid.internal and matches the leaf.
 fullnameOverride: grid-provider-gateway
 image:
   flavor: grid-gateway
@@ -27,8 +27,11 @@ gridIdentity:
   tlsSecretName: grid-site-identity
   caSecretName: grid-ca
   mountPath: /etc/praxis/tls
-route:
-  enabled: true
-  host: grid-provider.apps.ai-grid-1.qhdb.p1.openshiftapps.com
-  tls:
-    termination: passthrough
+service:
+  type: LoadBalancer
+# Without platform the chart emits no cloud annotations, and the AWS controller
+# reads an absent internal annotation as internal.
+platform: aws
+# A peer in another region reaches this, and AWS fixes the scope when the load
+# balancer is created.
+loadBalancerScope: external
