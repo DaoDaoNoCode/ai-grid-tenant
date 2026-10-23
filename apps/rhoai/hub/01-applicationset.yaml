@@ -51,11 +51,12 @@ spec:
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           path: apps/rhoai/manifests
-        # The enrollment service runs on the hub, so its ServiceExport and
-        # invite namespace have nothing behind them on a managed cluster.
+        # The enrollment service runs on the hub, so a managed cluster excludes these.
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
-          path: '{{ if eq .name "local-cluster" }}apps/rhoai/local-cluster{{ else }}apps/rhoai/managed-clusters{{ end }}'
+          path: apps/rhoai/local-cluster
+          directory:
+            exclude: '{{ if eq .name "local-cluster" }}{{ else }}*{{ end }}'
         - repoURL: https://github.com/kahowell/ai-grid-tenant.git
           targetRevision: HEAD
           path: apps/rhoai/grid-network
