@@ -103,6 +103,16 @@ spec:
           jsonPointers:
             - /data
             - /metadata/annotations
+        - group: ""
+          kind: Service
+          name: grid-provider-gateway
+          namespace: redhat-ai-grid
+          jsonPointers:
+            - /spec/type
+          jqPathExpressions:
+            - '.metadata.annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]'
+            - '.metadata.annotations["service.beta.kubernetes.io/aws-load-balancer-type"]'
+            - '.spec.ports[] | select(.name == "http") | .nodePort'
       syncPolicy:
         automated:
           prune: true
