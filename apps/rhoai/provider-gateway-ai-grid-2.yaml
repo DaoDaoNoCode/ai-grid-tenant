@@ -1,0 +1,34 @@
+# Passthrough Route: terminating TLS drops the peer certificate the admission reads.
+fullnameOverride: grid-provider-gateway
+image:
+  flavor: grid-gateway
+grid:
+  networkName: grid
+praxisConfig:
+  source: render
+  render:
+    role: provider
+    peerTrust:
+      mode: spiffe
+      spiffeIds:
+        - spiffe://grid.internal/site/local-cluster
+    backends:
+      - cluster: local-model
+        endpoints:
+          - facebook-opt-125m-kserve-workload-svc.ai-grid-internal-models.svc.cluster.local.:8000
+        transport:
+          mode: tls
+          ca:
+            configMapName: openshift-service-ca.crt
+            key: service-ca.crt
+        # praxis refuses a name that resolves to a private address.
+        trustPrivate: true
+gridIdentity:
+  tlsSecretName: grid-site-identity
+  caSecretName: grid-ca
+  mountPath: /etc/praxis/tls
+route:
+  enabled: true
+  host: grid-provider.apps.ai-grid-2-pool-mk8j5.aws.rh-ods.com
+  tls:
+    termination: passthrough
