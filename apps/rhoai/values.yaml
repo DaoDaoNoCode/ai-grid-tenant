@@ -151,9 +151,13 @@ global:
 grid-enrollment:
   # enabled is set per cluster by the ApplicationSet: the hub runs enrollment,
   # spokes must not hold the Grid CA signing key.
-  host: grid-enrollment.redhat-ai-grid.svc.clusterset.local
+  # A Route, not the clusterset name: ACM's Submariner addon refuses to prepare a
+  # ROSA cluster ("unsupported vendor OpenShiftDedicated"), so no cross-cluster
+  # tunnel forms and clusterset.local does not resolve on a spoke. Passthrough is
+  # the chart default, so the site still pins the grid CA end to end.
+  host: grid-enrollment.apps.ai-grid-1.qhdb.p1.openshiftapps.com
   route:
-    enabled: false
+    enabled: true
   serving:
     extraDnsNames:
       - grid-enrollment.redhat-ai-grid.svc.clusterset.local
