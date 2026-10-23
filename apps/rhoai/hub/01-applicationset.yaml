@@ -29,7 +29,7 @@ spec:
         # the change is available upstream. This lets ACM own protected
         # Namespaces while the chart still owns the OLM operator resources.
         - repoURL: https://github.com/pierDipi/odh-gitops.git
-          targetRevision: c1be9382ef7da230d4fd3ba003d42e443804c81e
+          targetRevision: fix/authorino-service-ca-trust
           path: charts/rhai-on-openshift-chart
           helm:
             releaseName: rhai-on-openshift

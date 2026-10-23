@@ -16,6 +16,9 @@ operator:
 # (named after the package) and blocks CSV installs/upgrades. Let RHACM own
 # COO on this cluster until the OG naming is standardized in odh-gitops.
 dependencies:
+  rhcl:
+    config:
+      authorinoServiceCaTrust: true
   clusterObservability:
     enabled: false
   loki:
