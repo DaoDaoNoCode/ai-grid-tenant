@@ -6,22 +6,5 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 spec:
-  # ROSA does not let a tenant open the node ports libreswan needs, so the
-  # gateway takes a load balancer instead.
-  loadBalancerEnable: true
-  gatewayConfig:
-    gateways: 2
----
-apiVersion: submarineraddon.open-cluster-management.io/v1alpha1
-kind: SubmarinerConfig
-metadata:
-  name: submariner
-  namespace: ai-grid-2
-  annotations:
-    argocd.argoproj.io/sync-wave: "3"
-spec:
-  # ROSA does not let a tenant open the node ports libreswan needs, so the
-  # gateway takes a load balancer instead.
-  loadBalancerEnable: true
   gatewayConfig:
     gateways: 2
