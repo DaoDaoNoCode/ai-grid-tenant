@@ -1,8 +1,8 @@
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
-  name: rhoai-aitenant-oidc
-  namespace: maas-db
+  name: rhoai-tenant
+  namespace: redhat-ai-grid
   annotations:
     argocd.argoproj.io/sync-wave: "4"
 spec:
@@ -13,7 +13,7 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: rhoai-aitenant-oidc
+          name: rhoai-aitenant
         spec:
           remediationAction: enforce
           severity: high
@@ -37,3 +37,33 @@ spec:
                     clientId: tenant-demo
                     audience: tenant-demo
                     issuerUrl: '{{hub printf "%s/realms/saas" (fromSecret "maas-db" "keycloak-secrets" "KEYCLOAK_PUBLIC_URL" | base64dec) hub}}'
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: rhoai-maastenantconfig
+        spec:
+          remediationAction: enforce
+          severity: high
+          namespaceSelector:
+            include:
+              - models-as-a-service
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: maas.opendatahub.io/v1alpha1
+                kind: MaasTenantConfig
+                metadata:
+                  name: default-tenant
+                  namespace: models-as-a-service
+                spec:
+                  telemetry:
+                    enabled: true
+                    metrics:
+                      captureModelUsage: true
+                      captureUser: true
+                      captureGroup: true
+                      captureOrganization: true
+                    logs:
+                      captureUser: true
+                      captureOrganization: true
