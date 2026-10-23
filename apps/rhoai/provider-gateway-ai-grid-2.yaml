@@ -1,7 +1,11 @@
 # Peers dial this directly, so the SNI stays <site>.grid.internal and matches the leaf.
 fullnameOverride: grid-provider-gateway
+# A standalone release does not inherit the umbrella's pin, and the chart's own
+# default predates client_cert_mode require_named.
 image:
   flavor: grid-gateway
+  repository: registry.redhat.io/rhoai/odh-praxis-ai-grid-gateway-rhel9
+  digest: sha256:991f24ee2ce66b36bdc68f34f226d7fd81c6826a1221f1a3e0fde59fad78e1ea
 grid:
   networkName: grid
 praxisConfig:
