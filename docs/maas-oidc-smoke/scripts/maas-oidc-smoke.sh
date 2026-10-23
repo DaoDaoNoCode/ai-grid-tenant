@@ -8,10 +8,10 @@ Usage: docs/maas-oidc-smoke/scripts/maas-oidc-smoke.sh USER
 
 USER must be "alice" or "bob".
 
-Required environment:
-  REDIRECT_URI    Redirect URI registered for the OIDC client.
-
 Environment overrides:
+  REDIRECT_URI           Redirect URI registered for the OIDC client. Defaults to
+                         KEYCLOAK_REDIRECT_URI from the Keycloak secret.
+  ASSUME_YES             Set to 1 to proceed without the inference approval prompt.
   GATEWAY_HOST          MaaS Gateway hostname. Defaults to the Gateway status address.
   GATEWAY_PROTOCOL      Gateway protocol. Defaults to http.
   KEYCLOAK_NAMESPACE    Namespace containing the Keycloak secret. Defaults to maas-db.
@@ -19,6 +19,8 @@ Environment overrides:
   GATEWAY_NAMESPACE     Namespace containing the MaaS Gateway. Defaults to openshift-ingress.
   GATEWAY_NAME          MaaS Gateway resource name. Defaults to maas-default-gateway.
   OIDC_CLIENT_ID        OIDC client ID. Defaults to tenant-demo.
+  INFERENCE_PROMPT      Inference prompt. Defaults to a short deterministic smoke-test prompt.
+  INFERENCE_MAX_TOKENS  Maximum tokens for the inference request. Defaults to 32.
 EOF
 }
 
@@ -33,6 +35,20 @@ require_cmd() {
 
 print_section() {
   printf '\n== %s ==\n' "$1"
+}
+
+confirm_action() {
+  local action=$1
+  local reply
+
+  if [[ "${ASSUME_YES:-0}" == "1" ]]; then
+    return 0
+  fi
+
+  printf '\nApproval required\n%s\n' "$action" >&2
+  printf 'Proceed? [y/N] ' >&2
+  IFS= read -r reply
+  [[ "$reply" == [yY] || "$reply" == [yY][eE][sS] ]]
 }
 
 redirect_location() {
@@ -81,12 +97,14 @@ gateway_name="${GATEWAY_NAME:-maas-default-gateway}"
 client_id="${OIDC_CLIENT_ID:-tenant-demo}"
 gateway_protocol="${GATEWAY_PROTOCOL:-http}"
 redirect_uri="${REDIRECT_URI:-}"
+inference_prompt="${INFERENCE_PROMPT:-Reply with: MaaS OIDC inference succeeded.}"
+inference_max_tokens="${INFERENCE_MAX_TOKENS:-32}"
 
-[[ -n "$redirect_uri" ]] || fail "REDIRECT_URI must be set to the registered OIDC redirect URI"
 case "$gateway_protocol" in
   http|https) ;;
   *) fail "GATEWAY_PROTOCOL must be http or https" ;;
 esac
+[[ "$inference_max_tokens" =~ ^[1-9][0-9]*$ ]] || fail "INFERENCE_MAX_TOKENS must be a positive integer"
 
 keycloak_url=$(
   kubectl get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
@@ -96,6 +114,12 @@ client_secret=$(
   kubectl get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
     -o jsonpath='{.data.KEYCLOAK_CLIENT_SECRET}' | base64 -d
 )
+if [[ -z "$redirect_uri" ]]; then
+  redirect_uri=$(
+    kubectl get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
+      -o jsonpath='{.data.KEYCLOAK_REDIRECT_URI}' | base64 -d
+  )
+fi
 password=$(
   kubectl get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
     -o jsonpath="{.data.$password_key}" | base64 -d
@@ -103,6 +127,7 @@ password=$(
 
 [[ -n "$keycloak_url" ]] || fail "KEYCLOAK_PUBLIC_URL is empty in $keycloak_secret_name"
 [[ -n "$client_secret" ]] || fail "KEYCLOAK_CLIENT_SECRET is empty in $keycloak_secret_name"
+[[ -n "$redirect_uri" ]] || fail "REDIRECT_URI is unset and KEYCLOAK_REDIRECT_URI is empty in $keycloak_secret_name"
 [[ -n "$password" ]] || fail "$password_key is empty in $keycloak_secret_name"
 keycloak_url="${keycloak_url%/}"
 
@@ -364,6 +389,103 @@ if [[ -n "$api_key_id" ]]; then
   jq -e --arg id "$api_key_id" 'any(.data[]?; .id == $id)' "$api_key_list_response" >/dev/null ||
     fail "the newly created API key was not returned by listing"
   printf '  newly created key: found\n'
+fi
+
+inference_failed=0
+
+if [[ -z "$api_key_id" ]]; then
+  print_section "POST /v1/chat/completions"
+  printf '  skipped: no API key was provisioned\n'
+  print_section "POST /v1/completions"
+  printf '  skipped: no API key was provisioned\n'
+else
+  inference_model=$(jq -r '.[0].model_refs[0].name // empty' "$subscriptions_response")
+  if [[ -z "$inference_model" ]]; then
+    print_section "POST /v1/chat/completions"
+    printf '  skipped: no model is available through the subscription\n'
+    print_section "POST /v1/completions"
+    printf '  skipped: no model is available through the subscription\n'
+  else
+    confirm_action "Send one chat-completion request and one completion request to the MaaS Gateway using the newly created ephemeral API key.
+Endpoints: /v1/chat/completions and /v1/completions
+Model: $inference_model
+Prompt: $inference_prompt" || fail "inference request was not approved"
+
+    inference_request=$(jq -n \
+      --arg model "$inference_model" \
+      --arg prompt "$inference_prompt" \
+      --argjson max_tokens "$inference_max_tokens" \
+      '{
+        model: $model,
+        messages: [
+          {
+            role: "user",
+            content: $prompt
+          }
+        ],
+        max_tokens: $max_tokens
+      }')
+
+    inference_response="$tmpdir/inference-response.json"
+    inference_status=$(
+      curl -sS --max-time 60 \
+        -H "Authorization: Bearer $(cat "$api_key_file")" \
+        -H 'Content-Type: application/json' \
+        -d "$inference_request" \
+        -o "$inference_response" -w '%{http_code}' \
+        "$base_url/v1/chat/completions" || true
+    )
+
+    print_section "POST /v1/chat/completions"
+    printf '  HTTP status: %s\n' "$inference_status"
+    if [[ "$inference_status" != 2* ]] || ! jq -e 'has("choices") and (.choices | length > 0)' "$inference_response" >/dev/null; then
+      jq . "$inference_response" >&2 || true
+      inference_failed=1
+    else
+      printf '  model: %s\n' "$(jq -r '.model' "$inference_response")"
+      printf '  response: %s\n' "$(jq -r '.choices[0].message.content' "$inference_response")"
+      printf '  finish reason: %s\n' "$(jq -r '.choices[0].finish_reason' "$inference_response")"
+      printf '  prompt tokens: %s\n' "$(jq -r '.usage.prompt_tokens' "$inference_response")"
+      printf '  completion tokens: %s\n' "$(jq -r '.usage.completion_tokens' "$inference_response")"
+    fi
+
+    completions_request=$(jq -n \
+      --arg model "$inference_model" \
+      --arg prompt "$inference_prompt" \
+      --argjson max_tokens "$inference_max_tokens" \
+      '{
+        model: $model,
+        prompt: $prompt,
+        max_tokens: $max_tokens
+      }')
+
+    completions_response="$tmpdir/completions-response.json"
+    completions_status=$(
+      curl -sS --max-time 60 \
+        -H "Authorization: Bearer $(cat "$api_key_file")" \
+        -H 'Content-Type: application/json' \
+        -d "$completions_request" \
+        -o "$completions_response" -w '%{http_code}' \
+        "$base_url/v1/completions" || true
+    )
+
+    print_section "POST /v1/completions"
+    printf '  HTTP status: %s\n' "$completions_status"
+    if [[ "$completions_status" != 2* ]] || ! jq -e 'has("choices") and (.choices | length > 0)' "$completions_response" >/dev/null; then
+      jq . "$completions_response" >&2 || true
+      inference_failed=1
+    else
+      printf '  model: %s\n' "$(jq -r '.model' "$completions_response")"
+      printf '  response: %s\n' "$(jq -r '.choices[0].text' "$completions_response")"
+      printf '  finish reason: %s\n' "$(jq -r '.choices[0].finish_reason' "$completions_response")"
+      printf '  prompt tokens: %s\n' "$(jq -r '.usage.prompt_tokens' "$completions_response")"
+      printf '  completion tokens: %s\n' "$(jq -r '.usage.completion_tokens' "$completions_response")"
+    fi
+  fi
+fi
+
+if [ "$inference_failed" -ne 0 ]; then
+  fail "one or more inference requests failed"
 fi
 
 print_section "Smoke result"

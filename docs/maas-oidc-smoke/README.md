@@ -9,14 +9,17 @@ flow through the single-broker `saas` realm.
 - `kubectl`, `curl`, `jq`, `sed`, and `awk` installed locally.
 - A MaaS subscription that is synchronized and healthy.
 - A test user provisioned by the Keycloak setup (`alice` or `bob`).
-- The exact redirect URI registered for the `tenant-demo` OIDC client.
+- Access to the Keycloak Secret containing the redirect URI registered for the
+  `tenant-demo` OIDC client.
 
 ## Run
 
-Set the registered OIDC redirect URI:
+The script reads the registered OIDC redirect URI from the Keycloak Secret.
+Override it only when using a different registered URI:
 
 ```sh
-export REDIRECT_URI='<registered-redirect-uri>'
+REDIRECT_URI='<registered-redirect-uri>' \
+  docs/maas-oidc-smoke/scripts/maas-oidc-smoke.sh alice
 ```
 
 Run the smoke test for an administrator:
@@ -36,7 +39,8 @@ By default, the script discovers the Keycloak issuer from the
 `maas-default-gateway` Gateway status. Set `GATEWAY_HOST` only when using an
 explicit hostname. The host must be a hostname, not a complete URL.
 
-All other cluster resource names and namespaces can be overridden with the
+The inference prompt, token limit, and other cluster resource names and
+namespaces can be overridden with the
 environment variables listed by the script's usage output:
 
 ```sh
@@ -53,10 +57,28 @@ The script:
 4. Calls `/v1/me` and `/v1/subscriptions`.
 5. Creates a one-hour ephemeral API key when the user has a subscription.
 6. Calls `/v1/api-keys/search` and verifies that a newly created key is listed.
+7. Asks for approval, then sends OpenAI-compatible chat-completion and completion requests.
 
 For `alice`, the test expects one accessible subscription, creates an
 ephemeral API key, and verifies that the key appears in the search result.
-For `bob`, it expects no accessible subscription and no API keys.
+It then uses that key for two inference requests. For `bob`, it expects no
+accessible subscription, no API keys, and skips inference.
+
+## Inference approval
+
+Before sending the inference requests, the script stops and describes the
+action: the endpoints, model, prompt, and use of the newly created ephemeral
+API key. The requests are sent only after an interactive `y` or `yes`
+response.
+Both inference endpoints are attempted even when the first request fails; the
+script reports each result separately and exits nonzero after the second test.
+
+For an unattended run where an explicit approval has already been given outside
+the script, set:
+
+```sh
+export ASSUME_YES=1
+```
 
 ## Runtime files
 
