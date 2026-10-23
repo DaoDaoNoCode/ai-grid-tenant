@@ -1,3 +1,4 @@
+{{- if .Values.enabled }}
 {{- if not .Values.siteName }}
 {{- fail "siteName is required: the rhoai ApplicationSet sets it per cluster" }}
 {{- end }}
@@ -24,3 +25,4 @@ spec:
     - name: {{ .Values.gatewayName }}
       namespace: {{ .Values.namespace }}
       siteName: {{ .Values.siteName }}
+{{- end }}
