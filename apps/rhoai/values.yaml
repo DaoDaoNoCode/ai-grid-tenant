@@ -171,16 +171,10 @@ grid-enrollment:
     builtin:
       pvcAnnotations:
         argocd.argoproj.io/sync-options: Prune=false,Delete=false
-  # Keyed by site name. The hub issues its own identity through hubSite, so it
-  # is not invited.
-  invites:
-    ai-grid-2:
-      network: grid
-  # The chart's policy reads the token from the release namespace, where it is
-  # never written, so it cannot become compliant. A spoke has no enrollment
-  # configuration to redeem one with either.
-  invitePolicy:
-    enabled: false
+  # No invites: the ca-bootstrap and invite-admission templates both emit the
+  # same ValidatingAdmissionPolicy once invites is set, and Argo refuses a
+  # duplicated resource. A spoke has no enrollment configuration to redeem an
+  # invite with anyway.
   hubSite:
     name: local-cluster
     namespace: redhat-ai-grid
