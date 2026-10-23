@@ -15,11 +15,11 @@ praxis-gateway:
               key: service-ca.crt
           # praxis refuses a name that resolves to a private address.
           trustPrivate: true
-        # The peer's provider gateway. No SNI here, so the chart defaults it to
-        # ai-grid-2.grid.internal, the name the peer's leaf carries.
+        # The peer's router. No SNI here, so the chart defaults it to
+        # ai-grid-2.grid.internal, which is also the peer's Route host.
         - cluster: peer-ai-grid-2
           site: ai-grid-2
           endpoints:
-            - acdde7d1719c548b389463fbfdcbd50b-cb824f9f36b9f8f0.elb.us-west-2.amazonaws.com:8080
+            - ai-grid-2.apps.ai-grid-2-pool-mk8j5.aws.rh-ods.com:443
           transport:
             mode: mutual_tls
