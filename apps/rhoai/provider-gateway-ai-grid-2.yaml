@@ -31,14 +31,19 @@ gridIdentity:
   tlsSecretName: grid-site-identity
   caSecretName: grid-ca
   mountPath: /etc/praxis/tls
+# Peers arrive through the router, so the Service needs no address of its own.
 service:
-  type: LoadBalancer
-# Without platform the chart emits no cloud annotations, and the AWS controller
-# reads an absent internal annotation as internal.
-platform: aws
-# A peer in another region reaches this, and AWS fixes the scope when the load
-# balancer is created.
-loadBalancerScope: external
+  type: ClusterIP
+# The router already carries 443 on both clusters, so peers arrive there. The
+# Route's host is the name on this site's leaf, which is also the SNI a peer
+# sends, so passthrough reaches the listener with the client certificate intact.
+route:
+  enabled: true
+  host: ai-grid-2.grid.internal
+  tls:
+    termination: passthrough
+  annotations:
+    haproxy.router.openshift.io/timeout: 300s
 networkPolicy:
   # A peer arrives through the load balancer, and externalTrafficPolicy Cluster
   # translates it to the address of the node that received it. The peer itself is

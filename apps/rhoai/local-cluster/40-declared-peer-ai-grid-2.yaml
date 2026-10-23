@@ -27,7 +27,7 @@ spec:
   providerKind: vllm
   backendKind: local_model
   clusterName: peer-ai-grid-2
-  endpoint: https://acdde7d1719c548b389463fbfdcbd50b-cb824f9f36b9f8f0.elb.us-west-2.amazonaws.com:8080/v1
+  endpoint: https://ai-grid-2.apps.ai-grid-2-pool-mk8j5.aws.rh-ods.com:443/v1
   siteSelector:
     matchLabels:
       grid.hexfusion.io/declared-peer: "true"
