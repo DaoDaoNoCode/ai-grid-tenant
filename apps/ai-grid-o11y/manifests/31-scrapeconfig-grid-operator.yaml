@@ -11,6 +11,8 @@ metadata:
 spec:
   jobName: grid-operator-metrics
   metricsPath: /metrics
+  # The agent's own default is 5m, and the dashboard rates over 2m.
+  scrapeInterval: 30s
   scheme: HTTPS
   tlsConfig:
     ca:
