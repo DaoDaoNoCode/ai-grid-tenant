@@ -32,6 +32,6 @@ spec:
     matchLabels:
       grid.hexfusion.io/declared-peer: "true"
   models:
-    - name: facebook/opt-125m
+    - name: facebook-opt-125m
       capabilities:
         - text_generation
