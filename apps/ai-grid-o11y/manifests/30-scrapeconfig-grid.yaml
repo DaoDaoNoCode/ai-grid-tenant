@@ -16,6 +16,14 @@ spec:
   # The agent's own default is 5m, and the dashboard rates over 2m.
   scrapeInterval: 30s
   scheme: HTTPS
+  # The gateway names its candidate in `cluster`, and the fleet collector's
+  # remote write replaces `cluster` with the managed cluster name. Copy it out
+  # before that happens or every candidate collapses into one series.
+  metricRelabelings:
+    - sourceLabels: [cluster]
+      regex: (.+)
+      targetLabel: backend
+      action: replace
   tlsConfig:
     ca:
       configMap:
