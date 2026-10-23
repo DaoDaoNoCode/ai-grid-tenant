@@ -1,0 +1,26 @@
+# The grid series live on three TLS metrics listeners that the cluster's own
+# monitoring already scrapes. This federates them to the fleet view, which the
+# allowlist ConfigMap cannot do on an agent-based collector.
+apiVersion: monitoring.rhobs/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: grid-metrics
+  namespace: open-cluster-management-observability
+  labels:
+    app.kubernetes.io/component: user-workload-metrics-collector
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  jobName: grid-metrics
+  metricsPath: /metrics
+  scheme: HTTPS
+  tlsConfig:
+    ca:
+      configMap:
+        name: openshift-service-ca.crt
+        key: service-ca.crt
+    # Each target is reached by Service name, which is the name on its serving cert.
+    serverName: grid-gateway-metrics.redhat-ai-grid.svc
+  staticConfigs:
+    - targets:
+        - grid-gateway-metrics.redhat-ai-grid.svc:9443
