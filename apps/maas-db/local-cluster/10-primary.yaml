@@ -7,6 +7,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "3"
 spec:
   instances: 3
+  certificates:
+    serverAltDNSNames:
+      - maas-db-rw.maas-db.svc.clusterset.local
   bootstrap:
     initdb:
       database: maas

@@ -16,6 +16,8 @@ automated deletion.
   `local-cluster`.
 - The `maas-db-rw` Service is exported through Submariner as
   `maas-db-rw.maas-db.svc.clusterset.local`.
+- The primary server certificate includes the Submariner service name so remote
+  replicas can use `sslmode=verify-full`.
 - Every managed cluster gets the Submariner add-on through the
   `acm-submariner` ApplicationSet, so new clusters are onboarded automatically.
 - Each remote cluster runs `maas-read`, a CloudNativePG replica cluster using
