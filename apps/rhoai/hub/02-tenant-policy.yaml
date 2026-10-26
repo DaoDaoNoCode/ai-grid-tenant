@@ -36,7 +36,7 @@ spec:
                     accessTokenPurposeClaim: token_use
                     clientId: tenant-demo
                     audience: tenant-demo
-                    issuerUrl: '{{hub printf "%s/realms/saas" (fromSecret "maas-db" "keycloak-secrets" "KEYCLOAK_PUBLIC_URL" | base64dec) hub}}'
+                    issuerUrl: '{{hub printf "%s/realms/saas" (fromConfigMap "redhat-ai-grid" "rhoai-keycloak-public-url" "publicUrl") hub}}'
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
