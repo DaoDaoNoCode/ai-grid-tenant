@@ -8,6 +8,8 @@ metadata:
 spec:
   remediationAction: enforce
   disabled: false
+  hubTemplateOptions:
+    serviceAccountName: rhoai-tenant-templating
   policy-templates:
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
@@ -36,7 +38,7 @@ spec:
                     accessTokenPurposeClaim: token_use
                     clientId: tenant-demo
                     audience: tenant-demo
-                    issuerUrl: '{{hub printf "%s/realms/saas" (fromConfigMap "redhat-ai-grid" "rhoai-keycloak-public-url" "publicUrl") hub}}'
+                    issuerUrl: '{{hub printf "https://%s/realms/saas" (lookup "route.openshift.io/v1" "Route" "maas-db" "keycloak").spec.host hub}}'
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
