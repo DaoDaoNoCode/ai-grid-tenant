@@ -29,7 +29,7 @@ spec:
         # the change is available upstream. This lets ACM own protected
         # Namespaces while the chart still owns the OLM operator resources.
         - repoURL: https://github.com/pierDipi/odh-gitops.git
-          targetRevision: fix/authorino-service-ca-trust
+          targetRevision: fix/kuadrant-auth-timeout
           path: charts/rhai-on-openshift-chart
           helm:
             releaseName: rhai-on-openshift

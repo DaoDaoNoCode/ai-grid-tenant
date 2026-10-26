@@ -19,6 +19,8 @@ dependencies:
   rhcl:
     config:
       authorinoServiceCaTrust: true
+      # Cross-cluster OIDC/JWKS validation can exceed Kuadrant's 200ms default.
+      kuadrantOperatorAuthServiceTimeout: 1s
   clusterObservability:
     enabled: false
   loki:
