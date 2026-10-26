@@ -7,7 +7,7 @@ metadata:
   name: submariner
   namespace: {{ .Values.clusterName }}
   annotations:
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "6"
 spec:
   installNamespace: {{ .Values.installNamespace }}
 ---
