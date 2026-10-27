@@ -34,12 +34,13 @@ generators to create two Secrets in `maas-db`:
 - `keycloak-secrets` holds Keycloak bootstrap, client, broker, and test-user
   values.
 
-The `ExternalSecret` resources use `refreshPolicy: CreatedOnce` and
-`refreshInterval: 0s`, so each value is generated once and is not rotated by
-the controller. Their deletion policy retains the generated Secrets if the
-Keycloak app is removed. The Keycloak app may initially report missing resource
-errors until the External Secrets CRDs are installed; its retry policy
-refreshes and retries automatically.
+The `keycloak-db` ExternalSecret uses `refreshPolicy: CreatedOnce`, while
+`keycloak-secrets` uses `OnChange`; neither rotates the generated values. The
+`OnChange` policy ensures that template changes, such as removing an obsolete
+key, are reconciled into the existing Secret. Their deletion policy retains
+the generated Secrets if the Keycloak app is removed. The Keycloak app may
+initially report missing resource errors until the External Secrets CRDs are
+installed; its retry policy refreshes and retries automatically.
 
 The Keycloak admin username and non-secret client configuration are declared in
 the `keycloak-secrets` ExternalSecret template. To retrieve a generated value
