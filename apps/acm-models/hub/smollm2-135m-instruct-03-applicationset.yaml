@@ -2,8 +2,8 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   # Generates one Application for every cluster selected by the
-  # smollm2-135m-instruct Placement.
-  name: smollm2-135m-instruct
+  # acm-models-smollm2-135m-instruct Placement.
+  name: acm-models-smollm2-135m-instruct
   namespace: openshift-gitops
   annotations:
     argocd.argoproj.io/sync-wave: "3"
@@ -15,13 +15,13 @@ spec:
         configMapRef: acm-placement
         labelSelector:
           matchLabels:
-            cluster.open-cluster-management.io/placement: smollm2-135m-instruct
+            cluster.open-cluster-management.io/placement: acm-models-smollm2-135m-instruct
   syncPolicy:
     applicationsSync: sync
     preserveResourcesOnDeletion: false
   template:
     metadata:
-      name: 'smollm2-135m-instruct-{{.name}}'
+      name: 'acm-models-smollm2-135m-instruct-{{.name}}'
       namespace: openshift-gitops
     spec:
       project: default

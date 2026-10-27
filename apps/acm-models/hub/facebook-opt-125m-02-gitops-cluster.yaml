@@ -2,7 +2,7 @@ apiVersion: apps.open-cluster-management.io/v1beta1
 kind: GitOpsCluster
 metadata:
   # Creates Argo CD cluster secrets for every selected managed cluster.
-  name: facebook-opt-125m
+  name: acm-models-facebook-opt-125m
   namespace: openshift-gitops
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -13,5 +13,5 @@ spec:
   placementRef:
     apiVersion: cluster.open-cluster-management.io/v1beta1
     kind: Placement
-    name: facebook-opt-125m
+    name: acm-models-facebook-opt-125m
     namespace: openshift-gitops

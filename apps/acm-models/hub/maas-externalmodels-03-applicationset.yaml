@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: maas
+  name: acm-models-maas-externalmodels
   namespace: openshift-gitops
   annotations:
     argocd.argoproj.io/sync-wave: "3"
@@ -13,9 +13,12 @@ spec:
         selector:
           matchLabels:
             apps.open-cluster-management.io/acm-cluster: "true"
+  syncPolicy:
+    applicationsSync: sync
+    preserveResourcesOnDeletion: false
   template:
     metadata:
-      name: 'maas-externalmodels-{{.name}}'
+      name: 'acm-models-maas-externalmodels-{{.name}}'
       namespace: openshift-gitops
     spec:
       project: default

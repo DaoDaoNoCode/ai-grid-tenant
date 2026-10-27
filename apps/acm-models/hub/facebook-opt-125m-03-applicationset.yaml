@@ -2,8 +2,8 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   # Generates one Application for every cluster selected by the
-  # facebook-opt-125m Placement.
-  name: facebook-opt-125m
+  # acm-models-facebook-opt-125m Placement.
+  name: acm-models-facebook-opt-125m
   namespace: openshift-gitops
   annotations:
     argocd.argoproj.io/sync-wave: "3"
@@ -15,13 +15,13 @@ spec:
         configMapRef: acm-placement
         labelSelector:
           matchLabels:
-            cluster.open-cluster-management.io/placement: facebook-opt-125m
+            cluster.open-cluster-management.io/placement: acm-models-facebook-opt-125m
   syncPolicy:
     applicationsSync: sync
     preserveResourcesOnDeletion: false
   template:
     metadata:
-      name: 'facebook-opt-125m-{{.name}}'
+      name: 'acm-models-facebook-opt-125m-{{.name}}'
       namespace: openshift-gitops
     spec:
       project: default
