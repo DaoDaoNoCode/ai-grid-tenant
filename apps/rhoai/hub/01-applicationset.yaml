@@ -1,8 +1,8 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  # Generates one Application for every cluster secret created by the
-  # acm-models GitOpsCluster resource, including local-cluster.
+  # Generates one Application for every cluster secret created by the shared
+  # GitOpsCluster integration, including local-cluster.
   name: rhoai
   namespace: openshift-gitops
   annotations:

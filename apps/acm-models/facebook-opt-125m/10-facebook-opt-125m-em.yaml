@@ -11,6 +11,7 @@ spec:
       path: /v1/completions
       ref:
         name: grid-provider
+      # This needs to match the LLMInferenceService spec.model.name
       targetModel: facebook-opt-125m
       weight: 1
 ---

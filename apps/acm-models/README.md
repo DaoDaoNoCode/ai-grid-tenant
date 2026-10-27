@@ -1,14 +1,14 @@
-# Internal models and their Grid providers
+# Internal model deployments
 
-Model namespaces, the internal `LLMInferenceService` models, and the
-`ExternalProvider` publishing the Grid gateway to MaaS. `odh-model-controller`
-creates one `InferenceProvider` per published model.
+This app owns the internal `LLMInferenceService` deployment and its
+model-facing MaaS resources. Supporting namespaces, NetworkPolicies, and the
+Grid `ExternalProvider` are owned by the RHOAI apps.
 
 ## Scheduler metrics
 
 Without them a provider reports `Ready=Unknown`, reason
-`MetricsNotConfigured`, and its candidate publishes no load. Needs the policy
-here, admitting `redhat-ai-grid` to the scheduler's metrics port, and:
+`MetricsNotConfigured`, and its candidate publishes no load. The RHOAI
+prerequisites policy admits `redhat-ai-grid` to the scheduler's metrics port:
 
 ```yaml
 spec:

@@ -39,6 +39,7 @@ spec:
                     clientId: tenant-demo
                     audience: tenant-demo
                     issuerUrl: '{{hub printf "https://%s/realms/saas" (index (lookup "route.openshift.io/v1" "Route" "maas-db" "keycloak").status.ingress 0).host hub}}'
+
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
@@ -69,3 +70,52 @@ spec:
                     logs:
                       captureUser: true
                       captureOrganization: true
+
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: rhoai-grid-external-provider
+        spec:
+          remediationAction: enforce
+          severity: high
+          namespaceSelector:
+            include:
+              - models-as-a-service
+          object-templates:
+            # Fake API Key for external model -> local Grid GW connection
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: grid-maas-upstream
+                  namespace: models-as-a-service
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1"
+                type: Opaque
+                stringData:
+                  api-key: "dW51c2VkLWJ5LWNsdXN0ZXItbG9jYWwtZ3JpZA=="
+
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: inference.opendatahub.io/v1alpha1
+                kind: ExternalProvider
+                metadata:
+                  annotations:
+                    inference.opendatahub.io/port: "443"
+                    inference.opendatahub.io/tls: "true"
+                    argocd.argoproj.io/sync-wave: "2"
+                  name: grid-provider
+                  namespace: models-as-a-service
+                spec:
+                  auth:
+                    secretRef:
+                      name: grid-maas-upstream
+                    type: apikey
+                  endpoint: grid-gateway.redhat-ai-grid.svc.cluster.local
+                  provider: openai
+                  config:
+                    # Verify the gateway's service-ca certificate. A path already mounted in the
+                    # calling proxy; the controller never reads certificate bytes.
+                    tls.caCertificates: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt

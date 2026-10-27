@@ -2,6 +2,8 @@ apiVersion: serving.kserve.io/v1alpha2
 kind: LLMInferenceService
 metadata:
   name: facebook-opt-125m
+  # Namespace is fixed since it needs to be allowed in the Gateway allowed routes and the namespace itself
+  # has to have configurations to allow Grid binding.
   namespace: ai-grid-internal-models
   annotations:
     argocd.argoproj.io/sync-wave: "3"
@@ -10,6 +12,7 @@ spec:
     - name: v3-6-0-kserve-config-llm-template-cpu
   model:
     uri: hf://facebook/opt-125m
+    # Name needs to match ExternalModel target model name
     name: facebook-opt-125m
   replicas: 3
   router:

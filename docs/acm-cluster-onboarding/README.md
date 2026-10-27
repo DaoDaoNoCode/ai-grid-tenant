@@ -9,10 +9,10 @@ Use a one-time, parameterized `clusteradm` import for the initial cluster
 registration. After ACM accepts the cluster, the existing GitOps resources
 discover it dynamically:
 
-1. `apps/acm-models/hub/01-placement.yaml` selects clusters in the reserved
-   `global` cluster set.
-2. `apps/acm-models/hub/02-gitops-cluster.yaml` registers selected clusters
-   with Argo CD.
+1. `../../apps/acm-models/hub/facebook-opt-125m-01-placement.yaml`
+   selects clusters in the reserved `global` cluster set.
+2. `../../apps/acm-models/hub/facebook-opt-125m-02-gitops-cluster.yaml`
+   registers selected clusters with Argo CD.
 3. The repository's ApplicationSets generate applications for each registered
    cluster.
 
@@ -88,9 +88,10 @@ kubectl --context "$HUB_CONTEXT" -n openshift-gitops get placementdecisions
 kubectl --context "$HUB_CONTEXT" -n openshift-gitops get applications
 ```
 
-The new cluster should appear in the `acm-models-clusters` placement decision
-and receive generated applications such as `acm-models-<cluster-name>`,
-`rhoai-<cluster-name>`, and `maas-db-<cluster-name>`.
+The new cluster should appear in the `facebook-opt-125m` placement decision
+and receive generated applications such as
+`facebook-opt-125m-<cluster-name>`, `rhoai-<cluster-name>`, and
+`maas-db-<cluster-name>`.
 
 ## Security and repeatability
 

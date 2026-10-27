@@ -30,6 +30,74 @@ spec:
                 kind: Namespace
                 metadata:
                   name: redhat-ods-operator
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: ai-grid-internal-models
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"
+                  labels:
+                    # Identifies the namespace as allowed for Grid routing (automatically creates InferenceProvider for each LLMInferenceService in this namespace).
+                    grid.opendatahub.io/allowed: "true"
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: rhoai-namespaces-networkpolicies
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "2"
+                  name: grid-operator-metrics-scraping
+                  namespace: ai-grid-internal-models
+                spec:
+                  # The scheduler only; the model pod serves its own 9090 that Grid never reads.
+                  podSelector:
+                    matchLabels:
+                      app.kubernetes.io/component: llminferenceservice-router-scheduler
+                  policyTypes:
+                    - Ingress
+                  ingress:
+                    - ports:
+                        - port: 9090
+                          protocol: TCP
+                      from:
+                        - namespaceSelector:
+                            matchLabels:
+                              kubernetes.io/metadata.name: redhat-ai-grid
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "2"
+                  name: grid-gateway-backend
+                  namespace: ai-grid-internal-models
+                spec:
+                  podSelector:
+                    matchLabels:
+                      app.kubernetes.io/part-of: llminferenceservice
+                  policyTypes:
+                    - Ingress
+                  ingress:
+                    - ports:
+                        - port: 8000
+                          protocol: TCP
+                      from:
+                        - namespaceSelector:
+                            matchLabels:
+                              kubernetes.io/metadata.name: redhat-ai-grid
+
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy

@@ -3,7 +3,7 @@ kind: ApplicationSet
 metadata:
   # Generates one Application for every cluster secret created by the
   # GitOpsCluster resource above, including local-cluster.
-  name: acm-models
+  name: facebook-opt-125m
   namespace: openshift-gitops
   annotations:
     argocd.argoproj.io/sync-wave: "3"
@@ -17,14 +17,14 @@ spec:
             apps.open-cluster-management.io/acm-cluster: "true"
   template:
     metadata:
-      name: 'acm-models-{{.name}}'
+      name: 'facebook-opt-125m-{{.name}}'
       namespace: openshift-gitops
     spec:
       project: default
       source:
         repoURL: https://github.com/kahowell/ai-grid-tenant.git
         targetRevision: HEAD
-        path: apps/acm-models/manifests
+        path: apps/acm-models/facebook-opt-125m
       destination:
         server: '{{.server}}'
         namespace: models-as-a-service

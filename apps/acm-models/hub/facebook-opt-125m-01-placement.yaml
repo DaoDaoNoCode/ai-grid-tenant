@@ -3,7 +3,7 @@ kind: Placement
 metadata:
   # Selects every managed cluster for Argo CD registration, including the
   # hub's local-cluster entry.
-  name: acm-models-clusters
+  name: facebook-opt-125m
   namespace: openshift-gitops
   annotations:
     argocd.argoproj.io/sync-wave: "1"
