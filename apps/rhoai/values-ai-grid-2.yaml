@@ -5,9 +5,19 @@ praxis-gateway:
   praxisConfig:
     render:
       backends:
-        - cluster: grid-ai-grid-internal-models-fa6be7f7aa89d053c2466c363fd2168872
+        - cluster: grid-ai-grid-internal-models-fa96621385a8bb10c46cf9180d36679b50
           endpoints:
             - facebook-opt-125m-kserve-workload-svc.ai-grid-internal-models.svc.cluster.local.:8000
+          transport:
+            mode: tls
+            ca:
+              configMapName: openshift-service-ca.crt
+              key: service-ca.crt
+          # praxis refuses a name that resolves to a private address.
+          trustPrivate: true
+        - cluster: grid-ai-grid-internal-models-sm1fbfffa900b293e454710b6c1fc7c4d4
+          endpoints:
+            - smollm2-135m-instruct-kserve-workload-svc.ai-grid-internal-models.svc.cluster.local.:8000
           transport:
             mode: tls
             ca:
