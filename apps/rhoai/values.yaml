@@ -17,10 +17,13 @@ operator:
 # COO on this cluster until the OG naming is standardized in odh-gitops.
 dependencies:
   rhcl:
+    olm:
+      config:
+        env:
+          - name: AUTH_SERVICE_TIMEOUT
+            value: 1s
     config:
       authorinoServiceCaTrust: true
-      # Cross-cluster OIDC/JWKS validation can exceed Kuadrant's 200ms default.
-      kuadrantOperatorAuthServiceTimeout: 1s
   clusterObservability:
     enabled: false
   loki:
