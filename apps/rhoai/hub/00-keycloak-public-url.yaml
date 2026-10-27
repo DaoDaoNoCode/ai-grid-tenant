@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: rhoai-keycloak-public-url
-  namespace: redhat-ai-grid
-  annotations:
-    argocd.argoproj.io/sync-wave: "3"
-data:
-  publicUrl: https://keycloak-grid-sso.apps.ai-grid-1.qhdb.p1.openshiftapps.com
