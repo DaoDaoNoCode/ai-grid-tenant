@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  # Generates one Application for every cluster secret created by the
+  # GitOpsCluster resource above, including local-cluster.
+  name: smollm2-135m-instruct
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            apps.open-cluster-management.io/acm-cluster: "true"
+  template:
+    metadata:
+      name: 'smollm2-135m-instruct-{{.name}}'
+      namespace: openshift-gitops
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/kahowell/ai-grid-tenant.git
+        targetRevision: HEAD
+        path: apps/acm-models/smollm2-135m-instruct
+      destination:
+        server: '{{.server}}'
+        namespace: models-as-a-service
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        retry:
+          limit: 10
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 10m
+        syncOptions:
+          - CreateNamespace=true
+          - SkipDryRunOnMissingResource=true
