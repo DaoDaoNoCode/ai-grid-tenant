@@ -58,6 +58,7 @@ metadata:
   name: keycloak-public-url
   annotations:
     argocd.argoproj.io/sync-wave: "4"
+    policy.open-cluster-management.io/refresh: "rbac-2026-10-27"
 spec:
   remediationAction: enforce
   disabled: false
