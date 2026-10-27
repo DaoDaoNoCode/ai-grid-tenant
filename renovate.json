@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "helm-values": {
-    "managerFilePatterns": ["/(^|/)values\.ya?ml$/", "/(^|/)nightly\.ya?ml$/"]
+    "managerFilePatterns": ["/(^|/)values\.ya?ml$/", "/(^|/)nightly\.ya?ml$/", "/(^|/)values-[^/]+\\.ya?ml$/"]
   },
   "customManagers": [
     {
