@@ -14,7 +14,7 @@ spec:
     - requiredClusterSelector:
         claimSelector:
           matchExpressions:
-            - key: platform.open-cluster-management.io
+            - key: region.open-cluster-management.io
               operator: In
               values:
-                - aws
+                - us-west-2
