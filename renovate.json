@@ -2,5 +2,29 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "helm-values": {
     "managerFilePatterns": ["/(^|/)values\.ya?ml$/", "/(^|/)nightly\.ya?ml$/"]
-  }
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The rhoai-nightly-updater chart's release tag",
+      "managerFilePatterns": ["/(^|/)apps/rhoai-nightly-updater/hub/[^/]+\\.ya?ml$/"],
+      "matchStrings": [
+        "repoURL: https://github\\.com/(?<depName>DaoDaoNoCode/rhoai-nightly-updater)\\.git\\s+targetRevision: (?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "datasourceTemplate": "github-releases"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "The updater chart only renders its own release's image: update both together",
+      "matchDepNames": ["DaoDaoNoCode/rhoai-nightly-updater", "quay.io/juntao_wang/rhoai-nightly-updater"],
+      "groupName": "rhoai-nightly-updater"
+    },
+    {
+      "description": "The oauth-proxy tag follows the cluster's OCP minor version: digests only",
+      "matchDepNames": ["registry.redhat.io/openshift4/ose-oauth-proxy-rhel9"],
+      "matchUpdateTypes": ["major", "minor", "patch"],
+      "enabled": false
+    }
+  ]
 }

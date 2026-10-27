@@ -1,0 +1,13 @@
+# Shared values of the RHOAI Nightly Updater chart, for every cluster's
+# Application; values-<cluster>.yaml, when present, overrides them for one
+# cluster. The chart refuses an image without a digest.
+# gitops: the updater only installs the build the Git-managed catalog serves.
+profile: gitops
+parameters:
+  # The image of the chart's release (targetRevision in
+  # hub/01-applicationset.yaml). Its org.opencontainers.image.revision label
+  # must be that tag's commit; the chart checks only the tag.
+  IMAGE: quay.io/juntao_wang/rhoai-nightly-updater:v2.2.0@sha256:b8140b32cc82c0b5c1c026ef197d6f4e59fc96d17e2ef576d02cbec95c849ce8
+  # The tag is the cluster's OCP minor version; a cluster on another minor
+  # sets its own in values-<cluster>.yaml. The digest is the manifest list's.
+  OAUTH_PROXY_IMAGE: registry.redhat.io/openshift4/ose-oauth-proxy-rhel9:v4.22@sha256:01aff928e344429dd8edf807716594c2a60719c629a6e8277ec9be81c5c019a7

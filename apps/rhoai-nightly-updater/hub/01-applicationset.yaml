@@ -1,0 +1,66 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  # Generates one Application for every cluster secret created by the shared
+  # GitOpsCluster integration, including local-cluster. The chart's gitops
+  # profile has a Role in redhat-ods-operator, so it must target only clusters
+  # that run RHOAI: keep this selector the same as the rhoai ApplicationSet's
+  # (apps/rhoai/hub/01-applicationset.yaml).
+  name: rhoai-nightly-updater
+  namespace: openshift-gitops
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            apps.open-cluster-management.io/acm-cluster: "true"
+  template:
+    metadata:
+      name: 'rhoai-nightly-updater-{{ .name | trunc 32 }}-{{ sha256sum .name | trunc 8 }}'
+      namespace: openshift-gitops
+    spec:
+      project: default
+      sources:
+        - repoURL: https://github.com/kahowell/ai-grid-tenant.git
+          targetRevision: HEAD
+          ref: values
+        # The chart and parameters.IMAGE in values.yaml are one release: change
+        # both in the same commit.
+        - repoURL: https://github.com/DaoDaoNoCode/rhoai-nightly-updater.git
+          targetRevision: v2.2.0
+          path: deploy/chart
+          helm:
+            releaseName: rhoai-nightly-updater
+            # values-<cluster>.yaml is optional: a cluster on another OCP minor
+            # version sets its own oauth-proxy image there.
+            ignoreMissingValueFiles: true
+            valueFiles:
+              - $values/apps/rhoai-nightly-updater/values.yaml
+              - $values/apps/rhoai-nightly-updater/values-{{ .name }}.yaml
+      # As for rhoai: the hub resolves to Argo's own in-cluster destination.
+      # Through the cluster-proxy, the ACM addon ServiceAccount would apply the
+      # chart's NetworkPolicy and its Role in redhat-ods-operator, which the
+      # managed-cluster webhooks deny. Argo's controller ServiceAccount is
+      # allowed both.
+      destination:
+        server: '{{ if eq .name "local-cluster" }}https://kubernetes.default.svc{{ else }}{{ .server }}{{ end }}'
+        namespace: rhoai-nightly-updater
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        # The Role in redhat-ods-operator fails until RHOAI's namespace exists;
+        # retry covers a cluster that joins before the rhoai Application synced.
+        retry:
+          refresh: true
+          limit: 20
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 30m
+        syncOptions:
+          # The chart does not create its namespace.
+          - CreateNamespace=true
+          - SkipDryRunOnMissingResource=true
