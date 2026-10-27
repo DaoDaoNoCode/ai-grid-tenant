@@ -5,7 +5,7 @@ praxis-gateway:
   praxisConfig:
     render:
       backends:
-        - cluster: grid-ai-grid-internal-models-fa531bc7468989a8b6551289b70581d1bb
+        - cluster: grid-ai-grid-internal-models-faed73c1e8cd2d951f0c419304cf91ad05
           endpoints:
             - facebook-opt-125m-kserve-workload-svc.ai-grid-internal-models.svc.cluster.local.:8000
           transport:

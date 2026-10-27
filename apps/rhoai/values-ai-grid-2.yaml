@@ -5,7 +5,7 @@ praxis-gateway:
   praxisConfig:
     render:
       backends:
-        - cluster: grid-ai-grid-internal-models-fa96621385a8bb10c46cf9180d36679b50
+        - cluster: grid-ai-grid-internal-models-faa71e071b1706382d340721b3ef0dccc5
           endpoints:
             - facebook-opt-125m-kserve-workload-svc.ai-grid-internal-models.svc.cluster.local.:8000
           transport:
@@ -15,7 +15,7 @@ praxis-gateway:
               key: service-ca.crt
           # praxis refuses a name that resolves to a private address.
           trustPrivate: true
-        - cluster: grid-ai-grid-internal-models-sm1fbfffa900b293e454710b6c1fc7c4d4
+        - cluster: grid-ai-grid-internal-models-smd37e259ad73ccb45d2542563a47a1190
           endpoints:
             - smollm2-135m-instruct-kserve-workload-svc.ai-grid-internal-models.svc.cluster.local.:8000
           transport:
