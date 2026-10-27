@@ -1,8 +1,8 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  # Generates one Application for every cluster secret created by the
-  # GitOpsCluster resource above, including local-cluster.
+  # Generates one Application for every cluster selected by the
+  # facebook-opt-125m Placement.
   name: facebook-opt-125m
   namespace: openshift-gitops
   annotations:
@@ -11,10 +11,14 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    - clusters:
-        selector:
+    - clusterDecisionResource:
+        configMapRef: acm-placement
+        labelSelector:
           matchLabels:
-            apps.open-cluster-management.io/acm-cluster: "true"
+            cluster.open-cluster-management.io/placement: facebook-opt-125m
+  syncPolicy:
+    applicationsSync: sync
+    preserveResourcesOnDeletion: false
   template:
     metadata:
       name: 'facebook-opt-125m-{{.name}}'
