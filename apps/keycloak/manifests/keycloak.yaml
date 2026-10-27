@@ -4,7 +4,7 @@ metadata:
   name: keycloak
   namespace: maas-db
   annotations:
-    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-wave: "5"
   labels:
     app.kubernetes.io/name: keycloak
 spec:
@@ -52,6 +52,8 @@ spec:
           envFrom:
             - secretRef:
                 name: keycloak-secrets
+            - configMapRef:
+                name: keycloak-public-url
           env:
             - name: KEYCLOAK_SIGNING_KEYSTORE_PASSWORD
               valueFrom:
@@ -92,6 +94,8 @@ spec:
           envFrom:
             - secretRef:
                 name: keycloak-secrets
+            - configMapRef:
+                name: keycloak-public-url
           env:
             - name: KC_DB
               value: postgres
@@ -115,8 +119,8 @@ spec:
               value: /opt/keycloak/database-ca/ca.crt
             - name: KC_HOSTNAME
               valueFrom:
-                secretKeyRef:
-                  name: keycloak-secrets
+                configMapKeyRef:
+                  name: keycloak-public-url
                   key: KEYCLOAK_PUBLIC_URL
             - name: KC_PROXY_HEADERS
               value: xforwarded

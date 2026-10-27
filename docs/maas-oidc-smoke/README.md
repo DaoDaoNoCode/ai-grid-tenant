@@ -44,7 +44,7 @@ docs/maas-oidc-smoke/scripts/maas-oidc-smoke.sh bob
 ```
 
 By default, the script discovers the Keycloak issuer from the
-`keycloak-secrets` Secret and the MaaS Gateway hostname from the
+`keycloak-public-url` ConfigMap and the MaaS Gateway hostname from the
 `maas-default-gateway` Gateway status. Set `GATEWAY_HOST` only when using an
 explicit hostname. The host must be a hostname, not a complete URL.
 

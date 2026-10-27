@@ -4,9 +4,8 @@ metadata:
   name: keycloak
   namespace: maas-db
   annotations:
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "3"
 spec:
-  host: keycloak-grid-sso.apps.ai-grid-1.qhdb.p1.openshiftapps.com
   to:
     kind: Service
     name: keycloak

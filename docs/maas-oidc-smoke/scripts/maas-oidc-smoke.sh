@@ -18,6 +18,9 @@ Environment overrides:
   GATEWAY_PROTOCOL      Gateway protocol. Defaults to http.
   KEYCLOAK_NAMESPACE    Namespace containing the Keycloak secret. Defaults to maas-db.
   KEYCLOAK_SECRET_NAME  Secret containing Keycloak runtime values. Defaults to keycloak-secrets.
+  KEYCLOAK_CONFIG_MAP_NAME
+                         ConfigMap containing the Keycloak public URL. Defaults
+                         to keycloak-public-url.
   GATEWAY_NAMESPACE     Namespace containing the MaaS Gateway. Defaults to openshift-ingress.
   GATEWAY_NAME          MaaS Gateway resource name. Defaults to maas-default-gateway.
   OIDC_CLIENT_ID        OIDC client ID. Defaults to tenant-demo.
@@ -94,6 +97,7 @@ done
 
 keycloak_namespace="${KEYCLOAK_NAMESPACE:-maas-db}"
 keycloak_secret_name="${KEYCLOAK_SECRET_NAME:-keycloak-secrets}"
+keycloak_config_map_name="${KEYCLOAK_CONFIG_MAP_NAME:-keycloak-public-url}"
 gateway_namespace="${GATEWAY_NAMESPACE:-openshift-ingress}"
 gateway_name="${GATEWAY_NAME:-maas-default-gateway}"
 gateway_kube_context="${GATEWAY_KUBE_CONTEXT:-}"
@@ -110,8 +114,8 @@ esac
 [[ "$inference_max_tokens" =~ ^[1-9][0-9]*$ ]] || fail "INFERENCE_MAX_TOKENS must be a positive integer"
 
 keycloak_url=$(
-  kubectl get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
-    -o jsonpath='{.data.KEYCLOAK_PUBLIC_URL}' | base64 -d
+  kubectl get configmap "$keycloak_config_map_name" -n "$keycloak_namespace" \
+    -o jsonpath='{.data.KEYCLOAK_PUBLIC_URL}'
 )
 client_secret=$(
   kubectl get secret "$keycloak_secret_name" -n "$keycloak_namespace" \
@@ -128,7 +132,7 @@ password=$(
     -o jsonpath="{.data.$password_key}" | base64 -d
 )
 
-[[ -n "$keycloak_url" ]] || fail "KEYCLOAK_PUBLIC_URL is empty in $keycloak_secret_name"
+[[ -n "$keycloak_url" ]] || fail "KEYCLOAK_PUBLIC_URL is empty in $keycloak_config_map_name"
 [[ -n "$client_secret" ]] || fail "KEYCLOAK_CLIENT_SECRET is empty in $keycloak_secret_name"
 [[ -n "$redirect_uri" ]] || fail "REDIRECT_URI is unset and KEYCLOAK_REDIRECT_URI is empty in $keycloak_secret_name"
 [[ -n "$password" ]] || fail "$password_key is empty in $keycloak_secret_name"

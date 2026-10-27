@@ -38,7 +38,7 @@ spec:
                     accessTokenPurposeClaim: token_use
                     clientId: tenant-demo
                     audience: tenant-demo
-                    issuerUrl: '{{hub printf "https://%s/realms/saas" (lookup "route.openshift.io/v1" "Route" "maas-db" "keycloak").spec.host hub}}'
+                    issuerUrl: '{{hub printf "https://%s/realms/saas" (index (lookup "route.openshift.io/v1" "Route" "maas-db" "keycloak").status.ingress 0).host hub}}'
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
