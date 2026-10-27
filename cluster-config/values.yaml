@@ -1,5 +1,5 @@
-# Users granted cluster-admin through the `cluster-admins` Argo CD
-# Application. Each entry renders one ClusterRoleBinding named
+# Users granted cluster-admin through the `cluster-config` ApplicationSet.
+# Each entry renders one ClusterRoleBinding named
 # `cluster-admin-<user>`; removing an entry prunes that binding and revokes
 # access on the next automated sync.
 #
@@ -16,3 +16,6 @@ cluster_admins:
   - sbatsche
   - rjjohnso
   - cchase
+
+hubResources:
+  enabled: false

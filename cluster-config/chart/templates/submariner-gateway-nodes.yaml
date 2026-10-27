@@ -1,3 +1,4 @@
+{{- if .Values.hubResources.enabled }}
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -72,3 +73,4 @@ subjects:
   - apiGroup: policy.open-cluster-management.io
     kind: Policy
     name: submariner-gateway-nodes
+{{- end }}

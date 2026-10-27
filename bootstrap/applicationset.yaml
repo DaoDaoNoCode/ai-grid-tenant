@@ -8,6 +8,7 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   syncPolicy:
     applicationsSync: sync
+    preserveResourcesOnDeletion: false
   generators:
     - git:
         repoURL: https://github.com/kahowell/ai-grid-tenant.git

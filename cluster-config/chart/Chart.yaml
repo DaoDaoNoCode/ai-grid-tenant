@@ -1,7 +1,7 @@
 apiVersion: v2
 name: cluster-admins
 description: >
-  Grants cluster-admin to a Git-managed list of users through one
-  ClusterRoleBinding per user.
+  Manages cluster-level configuration, including fleet-wide cluster-admin
+  bindings and hub-only ACM resources.
 type: application
 version: 0.1.0
