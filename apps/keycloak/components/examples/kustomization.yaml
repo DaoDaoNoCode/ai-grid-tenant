@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 # Example identity providers, organizations, and test realms.
-# Enabled per environment through the overlays/examples overlay.
+# Enabled by the default overlay. The core overlay omits it.
 resources:
   - signing-keys-grid.yaml
 configMapGenerator:

@@ -8,19 +8,34 @@ bootstrap ApplicationSet discovers `apps/keycloak/application.yaml` automaticall
 
 The app has two profiles. Each profile is a kustomize overlay.
 
-- `overlays/default` installs Keycloak and the core `saas` broker realm. The
-  core realm has the broker client and its signing key. The core realm has no
-  identity providers, organizations, or example tenants. This is the default.
-- `overlays/examples` adds the `grid-tenant-1-idp` and `grid-tenant-2-idp`
-  example realms. It also adds the example identity providers and organizations
-  in the `saas` realm and the two example signing keys.
+- `overlays/default` installs Keycloak and the example realms. It adds the
+  `grid-tenant-1-idp` and `grid-tenant-2-idp` realms, the example identity
+  providers and organizations in the `saas` realm, and the two example signing
+  keys. This is the default.
+- `overlays/core` installs Keycloak and only the `saas` broker realm. The core
+  realm has the broker client and its signing key. It has no identity
+  providers, organizations, or example tenants.
 
 The `saas` broker mints `org_id` from the identity provider binding. The token
 carries flat `org_id`, `org_name`, and `roles` claims and plain `groups`.
 
-To enable the examples in an environment, set the keycloak Application source
-path to `apps/keycloak/overlays/examples`. The default path is
+To install only the core realm, set the keycloak Application source path to
+`apps/keycloak/overlays/core`. The default path is
 `apps/keycloak/overlays/default`.
+
+## Direct install
+
+For a cluster without Argo CD, run:
+
+```sh
+apps/keycloak/install.sh --namespace grid-sso
+```
+
+Use `--render` to print the manifests without applying them. The script uses
+the examples profile and creates the namespace. It reads the Route host assigned
+by OpenShift and creates the `keycloak-public-url` ConfigMap. It does not install
+or use Argo CD or ACM. It still requires the CloudNativePG cluster, External
+Secrets, and cert-manager to be installed.
 
 ## Topology
 
