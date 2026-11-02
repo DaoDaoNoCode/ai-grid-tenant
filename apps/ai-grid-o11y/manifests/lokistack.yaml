@@ -2,7 +2,7 @@ apiVersion: loki.grafana.com/v1
 kind: LokiStack
 metadata:
   name: usage-logs
-  namespace: ai-grid-o11y
+  namespace: redhat-ods-monitoring
 spec:
   size: 1x.demo
   limits:
