@@ -54,6 +54,14 @@ as an override when present.
   and the MaaS database primary.
 - A default router the other sites can reach. Peers dial the provider gateway
   through it on 443 with TLS passthrough.
+- DNS that returns valid AAAA records for the router's wildcard names, or
+  NOERROR with an empty answer (NODATA) when the name has no IPv6 address, never
+  NXDOMAIN for AAAA while A exists. The grid operator is a static musl binary;
+  musl's resolver fails the whole lookup when either parallel query returns
+  NXDOMAIN, while glibc clients (curl in the same pod) still connect, so an
+  A-only DNS configuration that incorrectly answers AAAA with NXDOMAIN (A-only
+  itself is fine: answer NODATA) leaves every GridSite Connecting. Check with
+  `dig AAAA router-default.apps.<cluster>.<domain>`.
 - Capacity for the sample models: three replicas of 1 CPU and 10Gi memory. A
   GPU model needs GPU nodes and the NVIDIA operator, which this repository does
   not install.
