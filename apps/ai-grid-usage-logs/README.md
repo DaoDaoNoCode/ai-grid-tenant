@@ -4,9 +4,25 @@ The delivery half of AI Grid MaaS usage logs. Each site's RHOAI collector
 forwards usage records off-cluster; this app tells it where to send them and
 gives it the credential to do so.
 
-It renders no store. `apps/ai-grid-o11y` owns the hub's LokiStack, its
-ObjectBucketClaim and its Perses wiring, so a second store here would hold the
-same records in a second bucket. What this app adds is what that one lacks:
+It renders no store, and keeps no copy of the store's settings.
+`apps/ai-grid-o11y` owns all of it:
+
+| Owned by `apps/ai-grid-o11y` | Where |
+|---|---|
+| the LokiStack — name, size, storage class, schemas, 30-day retention, the seven promoted stream labels | `manifests/lokistack.yaml` |
+| the bucket | `manifests/obc-usage-logs-bucket.yaml` |
+| the S3 Secret it is translated into | `manifests/job-provision-loki-key.yaml` + `manifests/rbac-provision-loki-key.yaml` |
+| the writer identity | `manifests/sa-usage-logs-writer.yaml`, `clusterrole-…`, `clusterrolebinding-…` |
+| the Perses datasource and dashboard | `manifests/datasource-usage-logs-all.yaml`, `manifests/usage-logs-admin-dashboard.yaml` |
+
+`values.yaml` here deliberately does **not** restate any of those. The chart can
+render a store, so the toggles it would need are turned off explicitly —
+`lokiStack.enabled`, `ingest.writer.create`, `ingest.reader.create` — while
+`objectStorage` is left out altogether, since the chart already defaults
+`obc.create` to false. Every other store key is absent too: a second copy would
+diverge from that app silently while having no effect on what this app renders.
+
+What this app adds is what that one lacks:
 
 | | |
 |---|---|
