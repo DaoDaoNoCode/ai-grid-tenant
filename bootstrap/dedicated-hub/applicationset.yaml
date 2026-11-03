@@ -33,6 +33,7 @@ spec:
           - path: apps/external-secrets/application.yaml
           - path: apps/metallb/application.yaml
           - path: apps/argo-registration/application.yaml
+          - path: apps/odf/application.yaml
           - path: apps/rhoai/application.yaml
           - path: apps/rhoai-prerequisites/application.yaml
           - path: bootstrap/dedicated-hub/application.yaml
