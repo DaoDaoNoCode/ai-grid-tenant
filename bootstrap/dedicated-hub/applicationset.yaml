@@ -28,6 +28,7 @@ spec:
           - path: apps/keycloak/application.yaml
           - path: apps/limitador-redis/application.yaml
           - path: apps/external-secrets/application.yaml
+          - path: apps/metallb/application.yaml
           - path: apps/argo-registration/application.yaml
           - path: apps/rhoai/application.yaml
           - path: apps/rhoai-prerequisites/application.yaml

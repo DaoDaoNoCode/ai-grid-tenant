@@ -39,12 +39,19 @@ discover it dynamically:
 
    ```bash
    oc label managedcluster <name> ai-grid/machine-network=192.0.2.0_24
+
+   A site without a load-balancer provider also declares an L2 range for
+   MetalLB (see `apps/metallb/README.md`); sites that have one skip this:
+
+   ```bash
+   oc label managedcluster <name> ai-grid/metallb-pool=192.0.2.10-192.0.2.50
    ```
 
    Then add AI projects and models: see [AI project onboarding](../ai-project-onboarding/README.md).
 
 No `ManagedCluster`, join token, kubeconfig, API URL, or cluster name needs to
-be committed to this repository. No values file per site either. The grid
+be committed to this repository. No values file per site either, beyond the
+optional overrides a few apps accept (`apps/rhoai`, `apps/metallb`). The grid
 operator derives the gateways' routing from the models each site publishes, so
 one values file serves every site. A file named values-<cluster>.yaml is read
 as an override when present.
