@@ -75,6 +75,17 @@ spec:
               # cluster carries ai-grid/platform-namespaces=true (set before upgrading).
               - name: dependencies.loki.olm.createNamespace
                 value: '{{ if eq (index .metadata.labels "ai-grid/platform-namespaces") "true" }}false{{ else }}true{{ end }}'
+              # RHOAIENG-99507: on the hub, RHACM's multicluster-observability-addon
+              # installs Cluster Observability Operator with its own OperatorGroup,
+              # which conflicts with the chart's (named after the package) and blocks
+              # CSV installs/upgrades, so the hub must leave the chart's COO off. That
+              # addon does not install COO on a managed spoke -- it ships only the
+              # prom-agent collectors -- so without this the spoke has no COO, RHOAI's
+              # Monitoring service stays PreconditionsFailed, no collector is created
+              # and usage logs never forward. Let the chart own COO on spokes, and
+              # RHACM own it on the hub.
+              - name: dependencies.clusterObservability.enabled
+                value: '{{ ne (index .metadata.labels "local-cluster") "true" | toString }}'
             values: |
               praxis-gateway:
                 networkPolicy:
