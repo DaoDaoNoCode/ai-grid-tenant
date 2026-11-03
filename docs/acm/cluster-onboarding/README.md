@@ -27,6 +27,20 @@ discover it dynamically:
    oc label managedcluster <name> ai-grid/role=inference
    ```
 
+   Peers reach the provider gateway through the site's router, which the
+   gateway's NetworkPolicy admits whether the router runs on the cluster network
+   or on the host network (OVN-Kubernetes expands the ingress policy group to
+   the nodes' management addresses). Only a site whose gateway sees peers as node
+   machine addresses declares that network (IPv4 CIDR, `_` for `/`, prefix 1
+   to 32), before the role label on a new site and before upgrading an existing
+   one. To see what the gateway receives, dump the OVN conntrack entries for
+   its pod address on the node that runs it (`ovs-appctl dpctl/dump-conntrack`
+   in that node's ovnkube-node pod).
+
+   ```bash
+   oc label managedcluster <name> ai-grid/machine-network=192.0.2.0_24
+   ```
+
    Then add AI projects and models: see [AI project onboarding](../ai-project-onboarding/README.md).
 
 No `ManagedCluster`, join token, kubeconfig, API URL, or cluster name needs to
