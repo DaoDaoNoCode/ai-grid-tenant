@@ -29,10 +29,9 @@ member until `ai-grid/enabled` goes too.
 
 ## The hub
 
-The hub runs ACM and Argo CD. On a combined hub, the grid enrollment service runs
-in the hub's own OpenShift AI release (`grid-enrollment.enabled` on
-`local-cluster`), so the hub must be a site too, normally `combined`. Don't remove a combined hub from the grid or give it another role:
-its release, enrollment included, would stop being managed. A dedicated hub
+The hub runs ACM and Argo CD, and enrolls every site through grid-bootstrap
+(apps/grid-bootstrap): the label makes a cluster a member, and ACM policies
+deliver its identity, CA and GridNetwork. No enrollment service runs. A dedicated hub
 (`BOOTSTRAP_PROFILE=dedicated-hub`) isn't labelled, so it generates `rhoai`
 Applications for its sites only, none for itself.
 
@@ -45,10 +44,8 @@ tenants' keys or subscriptions.
 ## What a new site still needs
 
 The labels are enough for the site itself. The grid operator derives the
-gateways' routing from the models the site publishes, so no file per site. Two
-things stay on the hub: a declared peer file for the site, until members report
-their gateway address, and the provider gateway NetworkPolicy CIDR for a site
-outside the lab VPC. See
+gateways' routing from the models the site publishes, and policies deliver
+peers, so no file per site. See
 [cluster onboarding](../../docs/acm/cluster-onboarding/README.md).
 
 ## What a Remove does
@@ -74,9 +71,6 @@ What goes and what stays:
   (`maas-db-config`, `maas-db-app`, `maas-db-replication`) and the tenant
   objects. Copies may exist, so rotate the shared credentials after removing a
   site.
-- The hub still declares it as a peer in
-  `apps/rhoai/local-cluster/40-declared-peer-<cluster>.yaml` until that file
-  goes.
 
 A role change reaches the Placements at once, and the `rhoai` template a few
 seconds later (through Argo CD's cluster Secret), so the Application can render

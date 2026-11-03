@@ -96,13 +96,6 @@ as an override when present.
   not install.
 - No registry setup. Policies deliver the pull Secrets and the image mirror.
 
-Still per site, on the hub:
-
-- A declared peer file, apps/rhoai/local-cluster/40-declared-peer-<cluster>.yaml,
-  so other sites can route to this site's models. Members do not report their
-  gateway address yet.
-- The provider gateway NetworkPolicy CIDR, for a site outside the lab VPC.
-
 ## Trusting the external-services cluster's ingress CA
 
 Authorino on a MaaS site performs OpenID discovery against the external-services cluster's

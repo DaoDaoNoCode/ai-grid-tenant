@@ -36,8 +36,8 @@ Git. The enrollment chart's observers then distribute those endpoints to peers.
 
 The enrollment policy is the only source of each member's GridNetwork. The
 operator's config-read RBAC comes from `policies/operator-config-rbac.yaml` until
-the platform's Grid manifests carry it. The old enrollment service and the
-manual provider record remain for a separate cleanup.
+the platform's Grid manifests carry it. No enrollment service runs: the RHOAI
+release keeps grid-enrollment disabled.
 
 ## Verify the rollout
 
