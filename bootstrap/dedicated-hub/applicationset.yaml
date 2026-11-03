@@ -20,6 +20,7 @@ spec:
         files:
           - path: apps/acm/application.yaml
           - path: apps/acm-models/application.yaml
+          - path: apps/ai-grid-o11y/application.yaml
           - path: apps/ai-grid-policies/application.yaml
           - path: apps/ai-grid-spokes/application.yaml
           - path: apps/cert-manager/application.yaml
