@@ -31,6 +31,7 @@ spec:
               labelSelector:
                 matchLabels:
                   cluster.open-cluster-management.io/placement: ai-grid-inference
+              requeueAfterSeconds: 60
           - git:
               repoURL: https://github.com/ai-grid-cloud/ai-grid-shared-catalog.git
               revision: main
@@ -94,6 +95,7 @@ spec:
               labelSelector:
                 matchLabels:
                   cluster.open-cluster-management.io/placement: ai-grid-ingress
+              requeueAfterSeconds: 60
           - git:
               repoURL: https://github.com/ai-grid-cloud/ai-grid-shared-catalog.git
               revision: main
@@ -160,6 +162,7 @@ spec:
               labelSelector:
                 matchLabels:
                   cluster.open-cluster-management.io/placement: ai-grid-ingress
+              requeueAfterSeconds: 60
           - git:
               repoURL: https://github.com/ai-grid-cloud/ai-grid-shared-catalog.git
               revision: main

@@ -51,9 +51,8 @@ peers, so no file per site. See
 ## What a Remove does
 
 Removing `ai-grid/enabled`, or the role, takes the cluster out of these Placements, so its
-Applications go at the next poll: about a minute for `rhoai`,
-`grid-provider-gateway` and `maas-db` (`requeueAfterSeconds: 60`), up to 3
-minutes for the catalog ApplicationSets (Argo CD's default). A cluster that
+Applications go at the next poll: about a minute for every ApplicationSet that
+reads them (`requeueAfterSeconds: 60`). A cluster that
 can't be reached holds its Applications' deletion longer. The ApplicationSets
 read the Placements, not the label on Argo CD's cluster Secret, which ACM
 never removes.
