@@ -35,6 +35,12 @@ Environment overrides:
                          Defaults to 1.
   RATE_LIMIT_PROBE_ATTEMPTS
                          Maximum number of 429 probe requests. Defaults to 3.
+  REQUIRE_INFERENCE     Set to 1 to fail when inference is skipped, 0 to allow it.
+                         Defaults to 1 for alice and bob, 0 for carol.
+  EXPECT_MODEL          Fail unless inference uses this model name.
+
+Every skipped stage is listed in the result, and a run that skipped a required
+stage fails.
 EOF
 }
 
@@ -49,6 +55,14 @@ require_cmd() {
 
 print_section() {
   printf '\n== %s ==\n' "$1"
+}
+
+skipped_stages=()
+
+# Report a skipped stage and remember it for the result.
+skip_stage() {
+  printf '  skipped: %s\n' "$2"
+  skipped_stages+=("$1")
 }
 
 confirm_action() {
@@ -97,12 +111,18 @@ case "$user" in
   carol)
     broker_hint=grid-tenant-2
     password_key=GRID_TENANT_2_TEST_USER_PASSWORD
+    # Carol checks inventory only.
+    default_require_inference=0
     ;;
   *)
     usage >&2
     exit 2
     ;;
 esac
+
+require_inference="${REQUIRE_INFERENCE:-${default_require_inference:-1}}"
+[[ "$require_inference" == 0 || "$require_inference" == 1 ]] || fail "REQUIRE_INFERENCE must be 0 or 1"
+expect_model="${EXPECT_MODEL:-}"
 
 for cmd in kubectl curl jq sed awk; do
   require_cmd "$cmd"
@@ -376,7 +396,7 @@ if (( owner_subscription_count > 0 )); then
   printf '  key file: %s\n' "$api_key_file"
 else
   print_section "POST /v1/api-keys"
-  printf '  skipped: no owner-accessible subscription\n'
+  skip_stage api-key 'no owner-accessible subscription'
 fi
 
 api_key_list_request=$(jq -n '{
@@ -433,16 +453,19 @@ inference_succeeded=0
 
 if [[ -z "$api_key_id" ]]; then
   print_section "POST /v1/completions"
-  printf '  skipped: no owner-accessible API key was provisioned\n'
+  skip_stage inference 'no owner-accessible API key was provisioned'
 else
   inference_model_ref=$(
     jq -c '[.[] | select(((.roles // []) | length == 0) or ((.roles // []) | index("owner") != null))][0].model_refs[0] // empty' \
       "$subscriptions_response"
   )
   inference_model=$(jq -r '.name // empty' <<<"$inference_model_ref")
+  if [[ -n "$expect_model" && -n "$inference_model" && "$inference_model" != "$expect_model" ]]; then
+    fail "inference would use model $inference_model, not EXPECT_MODEL $expect_model"
+  fi
   if [[ -z "$inference_model" ]]; then
     print_section "POST /v1/completions"
-    printf '  skipped: no model is available through the subscription\n'
+    skip_stage inference 'no model is available through the subscription'
   else
     confirm_action "Send one completion request to the MaaS Gateway using the newly created ephemeral API key.
 Endpoint: /v1/completions
@@ -491,7 +514,7 @@ fi
 
 if [[ "$inference_succeeded" -ne 1 ]]; then
   print_section "Token rate limit"
-  printf '  skipped: inference was not completed\n'
+  skip_stage rate-limit 'inference was not completed'
 else
   rate_limit=$(
     jq -c '.token_rate_limits // [] | min_by(.limit) // empty' <<<"$inference_model_ref"
@@ -499,7 +522,7 @@ else
 
   if [[ -z "$rate_limit" ]]; then
     print_section "Token rate limit"
-    printf '  skipped: the selected model has no finite token rate limit\n'
+    skip_stage rate-limit 'the selected model has no finite token rate limit'
   else
     rate_limit_limit=$(jq -r '.limit' <<<"$rate_limit")
     rate_limit_window=$(jq -r '.window // "unknown"' <<<"$rate_limit")
@@ -516,8 +539,7 @@ else
 
     if (( rate_limit_prompt_tokens > rate_limit_max_prompt_tokens )); then
       print_section "Token rate limit"
-      printf '  skipped: the %s-token exhaustion prompt exceeds RATE_LIMIT_MAX_PROMPT_TOKENS (%s)\n' \
-        "$rate_limit_prompt_tokens" "$rate_limit_max_prompt_tokens"
+      skip_stage rate-limit "the ${rate_limit_prompt_tokens}-token exhaustion prompt exceeds RATE_LIMIT_MAX_PROMPT_TOKENS (${rate_limit_max_prompt_tokens})"
     else
       confirm_action "Send additional completion requests to exhaust and verify the subscription token rate limit.
 Endpoint: /v1/completions
@@ -612,4 +634,12 @@ subsequent probes expect HTTP 429." ||
 fi
 
 print_section "Smoke result"
-printf '  result: passed\n'
+if [[ "$require_inference" == 1 && "$inference_succeeded" -ne 1 ]]; then
+  fail "inference is required for $user but did not run"
+fi
+if (( ${#skipped_stages[@]} > 0 )); then
+  printf '  skipped: %s\n' "${skipped_stages[@]}"
+  printf '  result: passed with skips\n'
+else
+  printf '  result: passed\n'
+fi

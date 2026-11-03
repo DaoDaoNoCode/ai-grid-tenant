@@ -64,6 +64,11 @@ after a response, the probe retries up to `RATE_LIMIT_PROBE_ATTEMPTS` times.
 The test is skipped when the dynamically sized prompt would exceed
 `RATE_LIMIT_MAX_PROMPT_TOKENS`, avoiding an unsafe request payload.
 
+The result lists every skipped stage. For alice and bob, inference is required:
+a run that skips it fails instead of reporting a pass. Carol checks inventory
+only. Set `REQUIRE_INFERENCE=0` or `1` to override that, and `EXPECT_MODEL` to
+fail unless inference uses a given model.
+
 ## What the test verifies
 
 The script:
