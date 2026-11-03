@@ -59,6 +59,14 @@ as an override when present.
   label, since the ConfigMaps the trust step needs appear with the role's
   operators. With a publicly trusted certificate nothing is needed.
 
+- If the platform ships and owns `openshift-operators-redhat`, the Loki operator's
+  namespace (managed OpenShift such as OSD or ROSA), label the ManagedCluster
+  `ai-grid/platform-namespaces=true` before the role is set, and label existing
+  managed-OpenShift clusters before upgrading to this revision; the rhoai chart
+  then leaves that namespace alone. A self-managed cluster, hub or spoke, keeps
+  the default and the chart creates it. `redhat-ods-operator` is owned by the
+  prerequisites policy on every site and is not affected by this label.
+
 - A default StorageClass. RHOAI monitoring claims 20Gi for metrics and 10Gi for
   traces on every site. An ingress or combined site claims 20Gi for its MaaS
   database replica. The sample models pull weights at start and claim nothing.
