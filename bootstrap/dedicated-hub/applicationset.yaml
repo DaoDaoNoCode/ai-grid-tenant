@@ -1,5 +1,7 @@
 # Root ApplicationSet for a hub that runs no Grid or RHOAI workloads.
-# Install it with BOOTSTRAP_PROFILE=dedicated-hub ./bootstrap.sh.
+# Install it with BOOTSTRAP_PROFILE=dedicated-hub ./bootstrap.sh. It generates an
+# Application (dedicated-hub-root) that syncs bootstrap/dedicated-hub, so after
+# the initial bootstrap the ApplicationSet manages itself.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -32,6 +34,7 @@ spec:
           - path: apps/argo-registration/application.yaml
           - path: apps/rhoai/application.yaml
           - path: apps/rhoai-prerequisites/application.yaml
+          - path: bootstrap/dedicated-hub/application.yaml
   template:
     metadata:
       name: '{{.metadata.name}}'
