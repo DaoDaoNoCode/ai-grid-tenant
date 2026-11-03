@@ -33,6 +33,9 @@ publishes each member's source GridSite using admitted gateway and signals Route
 addresses. It waits for CRDs and Local network enrollment before writing the
 GridSite; router addresses are discovered on each member rather than stored in
 Git. The enrollment chart's observers then distribute those endpoints to peers.
+It places only on inference and combined members. An ingress member runs no models,
+so the operator's own GridSite for it carries no endpoints, and peers admit its
+calls without dialing or polling it.
 
 The enrollment policy is the only source of each member's GridNetwork. The
 operator's config-read RBAC comes from `policies/operator-config-rbac.yaml` until
