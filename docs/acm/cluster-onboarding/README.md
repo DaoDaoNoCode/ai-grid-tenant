@@ -39,8 +39,11 @@ as an override when present.
 
 - For an ingress or combined site whose external-services cluster serves Keycloak behind a
   privately signed ingress certificate: the cluster trust must include the
-  external-services cluster's ingress CA before the role is set ("Trusting the external-services cluster's ingress
-  CA" below). With a publicly trusted certificate nothing is needed.
+  external-services cluster's ingress CA before tenants use MaaS ("Trusting the
+  external-services cluster's ingress CA" below): on a site that already runs
+  Authorino, before the role changes; on a fresh site, right after the role
+  label, since the ConfigMaps the trust step needs appear with the role's
+  operators. With a publicly trusted certificate nothing is needed.
 
 - A default StorageClass. RHOAI monitoring claims 20Gi for metrics and 10Gi for
   traces on every site. An ingress or combined site claims 20Gi for its MaaS
@@ -95,7 +98,10 @@ at it, waits (bounded, default 15 minutes, every request and sleep capped to
 the remaining budget) until every certificate of the merged bundle appears by
 SHA-256 fingerprint in the mounted `odh-trusted-ca-bundle`, and finally
 verifies a TLS connection to the external-services cluster's OpenID discovery document with
-exactly that bundle. Set the role only after it reports success.
+exactly that bundle. On a site that already runs Authorino, run it before
+changing the role; on a fresh site the ConfigMaps appear with the role's
+operators, so run it right after the role label and before onboarding
+tenants.
 `tests/trust-external-services-ca-test.sh` exercises it against stub `oc` and `curl`
 binaries with real certificates.
 
