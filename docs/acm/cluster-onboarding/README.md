@@ -74,6 +74,20 @@ as an override when present.
   the default and the chart creates it. `redhat-ods-operator` is owned by the
   prerequisites policy on every site and is not affected by this label.
 
+- On managed OpenShift (OSD, ROSA), hub or spoke: the namespaces
+  `redhat-ai-grid` and `redhat-ods-operator`, created by a cluster
+  administrator before you set the role. The platform's admission webhook
+  `namespace-validation.managed.openshift.io` refuses `redhat-*` namespaces
+  from the ACM policy, so until they exist the `rhoai-prerequisites` policy
+  reports `rhoai-namespaces` NonCompliant. As that administrator:
+
+  ```bash
+  oc create namespace redhat-ai-grid
+  oc create namespace redhat-ods-operator
+  ```
+
+  The policy then reports Compliant and manages them from there.
+
 - A default StorageClass. RHOAI monitoring claims 20Gi for metrics and 10Gi for
   traces on every site. An ingress or combined site claims 20Gi for its MaaS
   database replica. The sample models pull weights at start and claim nothing.
