@@ -11,7 +11,7 @@ in the reserved `global` ACM cluster set:
   for mirrored operator-bundle pulls, and for every other registry the hub
   Secret holds, such as `registry.stage.redhat.io` for the
   `registry.redhat.io/rhaii*` mirrors that model images pull through.
-- the remote-only Limitador Redis configuration that shares MaaS rate-limit
+- the Limitador Redis configuration, on remote ingress and combined sites only, that shares MaaS rate-limit
   counters through the Submariner service import.
 - the catalog ServiceAccount's `imagePullSecrets` wiring is managed by
   `apps/rhoai/catalog`; OLM does not update an already-created catalog
