@@ -38,6 +38,10 @@ spec:
           - path: apps/rhoai/application.yaml
           - path: apps/rhoai-prerequisites/application.yaml
           - path: bootstrap/dedicated-hub/application.yaml
+    - clusters:
+        selector:
+          matchLabels:
+            apps.open-cluster-management.io/cluster-name: local-cluster
   template:
     metadata:
       name: '{{.metadata.name}}'
@@ -54,12 +58,16 @@ spec:
   # AppProjects), not its GitOpsCluster: argo-registration registers clusters
   # here.
   # Limitador runs on the sites, so limitador-redis leaves out its storage config.
+  # ODF's operator channel follows the hub's OpenShift minor version.
   templatePatch: |
     {{- $spec := .spec }}
     {{- if eq .metadata.name "grid-bootstrap" }}
     {{- range $spec.sources }}{{ if hasKey . "helm" }}
     {{- $_ := set .helm "parameters" (list (dict "name" "external.certManager.ca.mode" "value" "Generate") (dict "name" "managedClusters.createClusterSetBinding" "value" "true")) }}
     {{- end }}{{ end }}
+    {{- end }}
+    {{- if eq .metadata.name "odf" }}
+    {{- $_ := set $spec.source.helm "parameters" (list (dict "name" "openshift.version" "value" (index .metadata.labels "openshiftVersion-major-minor"))) }}
     {{- end }}
     {{- if eq .metadata.name "acm-models" }}
     {{- $_ := set $spec.source "directory" (dict "include" "{facebook-opt-125m-03-applicationset.yaml,maas-03-applicationset.yaml,catalog-03-appprojects.yaml,catalog-04-applicationsets.yaml}") }}
