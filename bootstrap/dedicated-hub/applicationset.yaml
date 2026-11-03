@@ -24,6 +24,7 @@ spec:
           - path: apps/ai-grid-policies/application.yaml
           - path: apps/ai-grid-spokes/application.yaml
           - path: apps/cert-manager/application.yaml
+          - path: apps/console/application.yaml
           - path: apps/gitops-config/application.yaml
           - path: apps/grid-bootstrap/application.yaml
           - path: apps/external-services/application.yaml
@@ -48,9 +49,10 @@ spec:
         namespace: '{{.spec.destination.namespace}}'
   # ODF provides the object storage ACM observability needs, so acm syncs
   # the full apps/acm/manifests. A new grid generates its CA, and grid-bootstrap
-  # binds global in place of the rhoai app's binding. acm-models brings only
-  # the sample model: argo-registration registers clusters here, and the
-  # console catalog is the combined hub's.
+  # binds global in place of the rhoai app's binding. acm-models brings the
+  # sample model and the console's catalog (its ApplicationSets and
+  # AppProjects), not its GitOpsCluster: argo-registration registers clusters
+  # here.
   # Limitador runs on the sites, so limitador-redis leaves out its storage config.
   templatePatch: |
     {{- $spec := .spec }}
@@ -60,7 +62,7 @@ spec:
     {{- end }}{{ end }}
     {{- end }}
     {{- if eq .metadata.name "acm-models" }}
-    {{- $_ := set $spec.source "directory" (dict "include" "{facebook-opt-125m-03-applicationset.yaml,maas-03-applicationset.yaml}") }}
+    {{- $_ := set $spec.source "directory" (dict "include" "{facebook-opt-125m-03-applicationset.yaml,maas-03-applicationset.yaml,catalog-03-appprojects.yaml,catalog-04-applicationsets.yaml}") }}
     {{- end }}
     {{- if eq .metadata.name "limitador-redis" }}
     {{- $_ := set $spec.source "directory" (dict "exclude" "{04-limitador-redis-secret.yaml,20-limitador-storage.yaml}") }}
