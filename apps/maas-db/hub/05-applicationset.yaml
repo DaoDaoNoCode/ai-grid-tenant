@@ -55,7 +55,7 @@ spec:
         targetRevision: HEAD
         path: '{{ if eq (index .metadata.labels "local-cluster") "true" }}apps/maas-db/primary{{ else }}apps/maas-db/read-clusters{{ end }}'
       destination:
-        server: '{{.server}}'
+        server: '{{ if eq (index .metadata.labels "local-cluster") "true" }}https://kubernetes.default.svc{{ else }}{{ .server }}{{ end }}'
         namespace: maas-db
       syncPolicy:
         automated:
