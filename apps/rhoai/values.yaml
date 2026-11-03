@@ -139,24 +139,8 @@ components:
                           # MaaS models in a Grid are represented by ExternalModel resources pointing to the Grid GW.
                           - models-as-a-service
                           - redhat-ai-gateway-infra
-
-            - name: https
-              port: 443
-              # hostname: <HOSTNAME> # Uncomment this line to use a specific hostname.
-              protocol: HTTPS
-              allowedRoutes:
-                namespaces:
-                  # The following is an example of how to restrict the namespaces to the interested ones.
-                  from: Selector
-                  selector:
-                    matchExpressions:
-                      - key: kubernetes.io/metadata.name
-                        operator: In
-                        values:
-                          - openshift-ingress
-                          # MaaS models in a Grid are represented by ExternalModel resources pointing to the Grid GW.
-                          - models-as-a-service
-                          - redhat-ai-gateway-infra
+          # No https listener until it has a certificate: maas-api advertises
+          # the https listener first, and without a certificate 443 is never bound.
 
 # Grid v0.3.0-rc.3 runtimes from the release on ghcr, until RHDS ships rc.3.
 # The subcharts otherwise fall back to ghcr.io/praxis-proxy. Keep these pins
