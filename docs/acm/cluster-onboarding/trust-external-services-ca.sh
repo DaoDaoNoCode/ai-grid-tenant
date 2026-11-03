@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Adds the CA that issued the MaaS home's Keycloak Route certificate to this site's cluster trust, so
+# Adds the CA that issued the external-services cluster's Keycloak Route certificate to this site's cluster trust, so
 # Authorino (apps/rhoai/maas-sites) can reach the home for OpenID discovery. Run with KUBECONFIG at the site.
 #
 #   HOME_KUBECONFIG=<home kubeconfig> KEYCLOAK_HOST=<home Keycloak Route host> REALM=<MaaS realm> \
-#     docs/acm/cluster-onboarding/trust-maas-home-ca.sh
+#     docs/acm/cluster-onboarding/trust-external-services-ca.sh
 #
 # HOME_CA_FILE=<PEM of the issuer> replaces HOME_KUBECONFIG for a home with a replaced ingress certificate.
 # Optional: AUTHORINO_NAMESPACE (kuadrant-system), TIMEOUT_SECONDS (900), POLL_SECONDS (20), WORKDIR.
@@ -11,14 +11,14 @@
 # proxy trust bundle, waits (by fingerprint) until it is mounted, then verifies TLS to the home's discovery
 # document with exactly that bundle.
 set -euo pipefail
-: "${KEYCLOAK_HOST:?set KEYCLOAK_HOST to the Keycloak Route host of the MaaS home}"
+: "${KEYCLOAK_HOST:?set KEYCLOAK_HOST to the Keycloak Route host of the external-services cluster}"
 : "${REALM:?set REALM to the MaaS realm}"
 AUTHORINO_NAMESPACE=${AUTHORINO_NAMESPACE:-kuadrant-system}
 TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-900}
 POLL_SECONDS=${POLL_SECONDS:-20}
 WORKDIR=${WORKDIR:-$(mktemp -d)}; mkdir -p "$WORKDIR"
 oc() { command oc --request-timeout=30s "$@"; }
-die() { echo "trust-maas-home-ca: $*" >&2; exit 1; }
+die() { echo "trust-external-services-ca: $*" >&2; exit 1; }
 
 certs_ok() { # <file>: non-empty and parses as one or more PEM certificates
   [ -s "$1" ] || return 1

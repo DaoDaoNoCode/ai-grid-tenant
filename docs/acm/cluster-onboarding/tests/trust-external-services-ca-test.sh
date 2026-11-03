@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Exercises trust-maas-home-ca.sh with real certificates (openssl) and stub oc and curl (no cluster); writes are
+# Exercises trust-external-services-ca.sh with real certificates (openssl) and stub oc and curl (no cluster); writes are
 # asserted on the stub's record.
 # shellcheck disable=SC2016  # the stub curl and the sourced helper are written as literal scripts
 set -euo pipefail
-HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd); SCRIPT="$HERE/../trust-maas-home-ca.sh"
+HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd); SCRIPT="$HERE/../trust-external-services-ca.sh"
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT; mkdir -p "$T/bin" "$T/fx"
 mkcert() { openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -keyout "$T/fx/$1.key" -out "$T/fx/$1.pem" -subj "/CN=$1" -days 2 >/dev/null 2>&1; }
 mkcert home-ca; mkcert existing-root; printf 'this is not a certificate\n' > "$T/fx/garbage.pem"
@@ -70,4 +70,4 @@ t success-only-after-deadline 1 written home-ca STUB_SITE_DELAY=2 TIMEOUT_SECOND
 t tls-verification-fails 1 written home-ca STUB_CURL=fail
 t sort-failure-refused 1 none - STUB_SORT=fail
 t comm-failure-refused 1 written home-ca STUB_COMM=fail
-echo "trust-maas-home-ca tests: $((total-fails)) ok, $fails failed"; exit "$fails"
+echo "trust-external-services-ca tests: $((total-fails)) ok, $fails failed"; exit "$fails"
