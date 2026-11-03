@@ -7,6 +7,15 @@ image:
   digest: sha256:cdb9c6f5d9ccca8f87920a19db6ba3b38faea3f0dc4153bacd3e34a00c0ab749
 gridIdentity:
   enabled: true
+ca:
+  bootstrap:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
 grid:
   membership:
     source: Local

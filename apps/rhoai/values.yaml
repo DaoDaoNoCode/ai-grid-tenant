@@ -39,8 +39,6 @@ dependencies:
         env:
           - name: AUTH_SERVICE_TIMEOUT
             value: 1s
-    config:
-      authorinoServiceCaTrust: true
   clusterObservability:
     enabled: false
   loki:
@@ -170,6 +168,25 @@ praxis-gateway:
   enabled: true
   image:
     flavor: grid-gateway
+    # Keep aligned with global.relatedImages below and apps/rhoai/provider-gateway.yaml.
+    digest: sha256:0010bc2167b5b0e13c533d6c789092566dd5f764661626b0e4dd05d37b94849b
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 2
+      memory: 1Gi
+  # Only MaaS and the router reach the consumer gateway; it dials peers with this site's identity.
+  networkPolicy:
+    enabled: true
+    from:
+      - podSelector:
+          matchLabels:
+            grid.opendatahub.io/gateway-client: "true"
+      - namespaceSelector:
+          matchLabels:
+            network.openshift.io/policy-group: ingress
   grid:
     networkName: grid
     # siteName comes from the ApplicationSet, one per cluster.

@@ -1,4 +1,16 @@
 # An ingress spoke runs MaaS, the portal and the grid consumer gateway: the
 # values in apps/rhoai/values.yaml. It serves no models; the grid provider
 # gateway and the models go to inference and combined spokes only.
-{}
+
+# MaaS site settings stated here rather than left to the chart's maas profile.
+components:
+  kserve:
+    dsc:
+      # Running models have headed Services; the chart default would make them headless.
+      rawDeploymentServiceConfig: Headed
+dependencies:
+  rhcl:
+    config:
+      spec:
+        observability:
+          enable: true
