@@ -4,11 +4,11 @@ A cluster is an AI Grid site when its ManagedCluster carries
 `ai-grid/enabled=true` and an `ai-grid/role` of `ingress`, `inference` or
 `combined`. Set both: without a role, nothing is installed.
 
-| Role | Runs |
-|---|---|
-| `ingress` | OpenShift AI with MaaS and the portal, the grid consumer gateway, the tenant Policy, a `maas-db` read replica, the models' MaaS side |
-| `inference` | OpenShift AI without MaaS (`apps/rhoai/roles/inference.yaml`), the grid operator and provider gateway, the models |
-| `combined` | Both. |
+| Role | Runs | Standard dashboard | MaaS portal |
+|---|---|---|---|
+| `ingress` | OpenShift AI with MaaS, the grid consumer gateway, the tenant Policy, a `maas-db` read replica, the models' MaaS side | Managed | Managed |
+| `inference` | OpenShift AI without MaaS (`apps/rhoai/roles/inference.yaml`), the grid operator and provider gateway, the models | Removed | Removed |
+| `combined` | Both. | Managed | Managed |
 
 With `ai-grid/enabled=true` and no role, or any other value, the cluster matches
 none of these Placements, so none of the AI Grid platform is installed: no

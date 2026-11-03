@@ -64,6 +64,9 @@ services:
 components:
   dashboard:
     dsc:
+      # Declare both children; these profiles otherwise leave standard Removed.
+      standard:
+        managementState: Managed
       maasPortal:
         managementState: Managed
   kserve:
