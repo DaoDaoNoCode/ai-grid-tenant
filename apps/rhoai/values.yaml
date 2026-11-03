@@ -23,6 +23,10 @@ operator:
           # Temporary change to test maas-api loki proxy
           - name: RELATED_IMAGE_ODH_MAAS_API_IMAGE
             value: quay.io/khowell_dev/maas-api:loki-access-proxy
+          # AI gateway controller at f36855d (ai-gateway-controller#209: the maas-api routes
+          # bypass ext_proc, so MaaS API calls stop failing); until the RHOAI 3.6 payload carries it.
+          - name: RELATED_IMAGE_ODH_AI_GATEWAY_CONTROLLER_IMAGE
+            value: quay.io/sbatsche/odh-ai-gateway-controller@sha256:3968ba3bf7037ae2eba0c6b9239c4b72ba50ef193fed987caf89649e49467015
 # Workaround for https://redhat.atlassian.net/browse/RHOAIENG-99507:
 # RHACM's multicluster-observability-addon also installs COO with its own
 # OperatorGroup (named after the namespace), which conflicts with the chart's
