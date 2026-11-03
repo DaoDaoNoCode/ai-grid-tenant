@@ -36,8 +36,8 @@ deliver its identity, CA and GridNetwork. No enrollment service runs. A dedicate
 Applications for its sites only, none for itself.
 
 The `maas-db` primary on the hub doesn't depend on the hub's labels: it's
-generated for `local-cluster` whatever they are, and every object in
-`apps/maas-db/local-cluster` (the CloudNativePG operator and the `Cluster`)
+generated for the hub whatever they are, and every object in
+`apps/maas-db/primary` (the CloudNativePG operator and the `Cluster`)
 carries `Delete=false`, so a Remove or a role change on the hub never deletes
 tenants' keys or subscriptions.
 

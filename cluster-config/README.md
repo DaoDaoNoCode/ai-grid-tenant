@@ -9,7 +9,7 @@ which deploys the fleet-wide `cluster-config` ApplicationSet.
 Grants `cluster-admin` to a Git-managed list of users through per-user
 `ClusterRoleBinding` objects (`cluster-admin-<user>`). The `cluster-config`
 ApplicationSet generates one automated Application for every cluster secret
-created by the shared GitOpsCluster integration, including `local-cluster`.
+created by the shared GitOpsCluster integration, including the hub.
 The hub uses Argo CD's in-cluster destination so the controller's
 ServiceAccount, rather than the ACM addon ServiceAccount, applies its RBAC.
 
@@ -59,7 +59,7 @@ selected cluster therefore receives exactly one generated Application and one
 binding per user, with no duplicate names.
 
 The chart's Submariner gateway policy is hub-only ACM state. The
-`hubResources.enabled` parameter is true only for `local-cluster`, so managed
+`hubResources.enabled` parameter is true only for the hub, so managed
 clusters render only the fleet-wide RBAC and do not receive duplicate Policy,
 Placement, or PlacementBinding resources.
 
