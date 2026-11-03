@@ -46,16 +46,14 @@ spec:
       destination:
         server: '{{.spec.destination.server}}'
         namespace: '{{.spec.destination.namespace}}'
-  # ACM observability needs object storage, so it is left out. A new
-  # grid generates its CA, and grid-bootstrap binds global in place of the rhoai
-  # app's binding. acm-models brings only the sample model: argo-registration
-  # registers clusters here, and the console catalog is the combined hub's.
+  # ODF provides the object storage ACM observability needs, so acm syncs
+  # the full apps/acm/manifests. A new grid generates its CA, and grid-bootstrap
+  # binds global in place of the rhoai app's binding. acm-models brings only
+  # the sample model: argo-registration registers clusters here, and the
+  # console catalog is the combined hub's.
   # Limitador runs on the sites, so limitador-redis leaves out its storage config.
   templatePatch: |
     {{- $spec := .spec }}
-    {{- if eq .metadata.name "acm" }}
-    {{- $_ := set $spec.source "path" "apps/acm/manifests/dedicated-hub" }}
-    {{- end }}
     {{- if eq .metadata.name "grid-bootstrap" }}
     {{- range $spec.sources }}{{ if hasKey . "helm" }}
     {{- $_ := set .helm "parameters" (list (dict "name" "external.certManager.ca.mode" "value" "Generate") (dict "name" "managedClusters.createClusterSetBinding" "value" "true")) }}
