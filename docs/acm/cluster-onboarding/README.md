@@ -119,13 +119,16 @@ mount three ConfigMaps for that: `odh-trusted-ca-bundle`,
 `openshift-service-ca.crt`, and `home-keycloak-ca`.
 
 When the hub is also the MaaS home, `rhoai-ingress-clusters` reads the hub's
-public `router-ca` certificate and creates `home-keycloak-ca` in
-`kuadrant-system` on every ingress or combined site. The role values project
+default ingress certificate (`openshift-config-managed/default-ingress-cert`)
+and creates `home-keycloak-ca` in `kuadrant-system` on every ingress or
+combined site, under the key `home-keycloak-ca.crt`. The role values project
 that ConfigMap directly into Authorino, and the Policy adds it to the Authorino
 CR's volume contract so the operator and Argo CD agree. No site-wide
-`proxy/cluster.spec.trustedCA` mutation is needed. If the home's Keycloak Route
-presents a certificate that chains to a public root, the extra ConfigMap is
-harmless and the same flow still works.
+`proxy/cluster.spec.trustedCA` mutation is needed. The key is separate from
+`odh-trusted-ca-bundle`'s `ca-bundle.crt` because both ConfigMaps project into
+the same directory: a shared key would replace the system bundle, and a
+Keycloak Route with a publicly signed certificate would then fail OIDC
+discovery. With its own key, Authorino trusts both bundles.
 
 When MaaS's shared state is on a dedicated cluster labelled
 `ai-grid/external-services=true`, the hub cannot read that cluster's

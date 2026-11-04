@@ -25,7 +25,12 @@ spec:
           object-templates-raw: |
             {{hub- $hubKeycloak := lookup "route.openshift.io/v1" "Route" "maas-db" "keycloak" hub}}
             {{hub- if $hubKeycloak hub}}
-            - complianceType: musthave
+            # Its own key: Authorino mounts this ConfigMap in one directory with
+            # odh-trusted-ca-bundle, whose key is ca-bundle.crt, and a second
+            # ca-bundle.crt would replace the system bundle (Keycloak behind a
+            # public certificate then fails OIDC discovery). mustonlyhave drops
+            # the old key from existing ConfigMaps.
+            - complianceType: mustonlyhave
               objectDefinition:
                 apiVersion: v1
                 kind: ConfigMap
@@ -33,7 +38,7 @@ spec:
                   name: home-keycloak-ca
                   namespace: kuadrant-system
                 binaryData:
-                  ca-bundle.crt: '{{hub fromConfigMap "openshift-config-managed" "default-ingress-cert" "ca-bundle.crt" | base64enc hub}}'
+                  home-keycloak-ca.crt: '{{hub fromConfigMap "openshift-config-managed" "default-ingress-cert" "ca-bundle.crt" | base64enc hub}}'
             {{hub- else hub}}
             - complianceType: musthave
               objectDefinition:
