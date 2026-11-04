@@ -117,14 +117,17 @@ spec:
                     redirect_uris+="\"$redirect_uri\""
                   done < /shared/redirect-uris
                   redirect_uris+=']'
+                  kcadm_config=/tmp/kcadm.config
 
                   /opt/keycloak/bin/kcadm.sh config credentials \
+                    --config "$kcadm_config" \
                     --server http://keycloak.maas-db.svc.cluster.local:8080 \
                     --realm master \
                     --user "$KC_BOOTSTRAP_ADMIN_USERNAME" \
                     --password "$KC_BOOTSTRAP_ADMIN_PASSWORD" >/dev/null
 
                   client_uuid="$(/opt/keycloak/bin/kcadm.sh get clients \
+                    --config "$kcadm_config" \
                     --realm saas \
                     --query "clientId=$KEYCLOAK_CLIENT_ID" \
                     --fields id | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' | head -1)"
@@ -134,6 +137,7 @@ spec:
                   }
 
                   /opt/keycloak/bin/kcadm.sh update "clients/$client_uuid" \
+                    --config "$kcadm_config" \
                     --realm saas \
                     --set "redirectUris=$redirect_uris"
               envFrom:

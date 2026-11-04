@@ -31,6 +31,7 @@ assert "consoleurl.cluster.open-cluster-management.io" in init_script
 assert "https://maas.apps.%s/oauth2/callback" in init_script
 assert "http://localhost:8000/callback" in init_script
 assert "kcadm.sh update" in update_script
+assert '--config "$kcadm_config"' in update_script
 assert "redirectUris=" in update_script
 with open(f"{sys.argv[2]}/init.sh", "w") as stream:
     stream.write(init_script)
