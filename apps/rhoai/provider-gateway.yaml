@@ -2,12 +2,12 @@
 # mTLS, and it reaches the site's models through the RHOAI serving gateway.
 # Peers dial this directly, so the SNI stays <site>.grid.internal and matches the leaf.
 fullnameOverride: grid-provider-gateway
-# A standalone release does not inherit the umbrella's pin. Keep this Grid
-# v0.3.0-rc.3 digest aligned with the gateway image in values.yaml.
+# A standalone release does not inherit the umbrella's pin. Keep this payload
+# gateway image aligned with the one in values.yaml.
 image:
   flavor: grid-gateway
-  repository: ghcr.io/praxis-proxy/grid-gateway
-  digest: sha256:0010bc2167b5b0e13c533d6c789092566dd5f764661626b0e4dd05d37b94849b
+  repository: registry.redhat.io/rhoai/odh-praxis-ai-grid-gateway-rhel9
+  digest: sha256:e2ae6ac64b675ec29a4d9a3728f9c9b19063ef21b59dce26542283034592c150
 grid:
   networkName: grid
   # siteName comes from the ApplicationSet, one per cluster.
