@@ -5,11 +5,12 @@ set -Eeuo pipefail
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-python3 - "$HERE/../hub/02-ingress-clusters-policy.yaml" "$HERE/../../acm/manifests/core/policy-addons.yaml" <<'PY'
+python3 - "$HERE/../hub/02-ingress-clusters-policy.yaml" "$HERE/../hub/00-tenant-templating-rbac.yaml" "$HERE/../../acm/manifests/core/policy-addons.yaml" <<'PY'
 import sys
 import yaml
 
 policy = yaml.safe_load(open(sys.argv[1]))
+rbac_documents = list(yaml.safe_load_all(open(sys.argv[2])))
 templates = [template["objectDefinition"] for template in policy["spec"]["policy-templates"]]
 secret_policy = next(template for template in templates
                       if template.get("metadata", {}).get("name") == "rhoai-tenant-oidc-client-secret")
@@ -27,7 +28,18 @@ assert tenant["spec"]["oidc"]["clientSecretRef"] == {
     "key": "clientSecret",
 }
 
-addons = [document for document in yaml.safe_load_all(open(sys.argv[2])) if document]
+maas_role = next(document for document in rbac_documents
+                 if document and document.get("kind") == "Role"
+                 and document["metadata"]["namespace"] == "maas-db"
+                 and document["metadata"]["name"] == "rhoai-tenant-templating")
+secret_rules = [rule for rule in maas_role["rules"] if rule.get("resources") == ["secrets"]]
+named_get = next(rule for rule in secret_rules if "get" in rule["verbs"])
+assert named_get["resourceNames"] == ["keycloak-secrets"]
+list_watch = next(rule for rule in secret_rules if "list" in rule["verbs"])
+assert set(list_watch["verbs"]) == {"list", "watch"}
+assert "resourceNames" not in list_watch
+
+addons = [document for document in yaml.safe_load_all(open(sys.argv[3])) if document]
 templating = next(addon for addon in addons
                   if addon.get("kind") == "ClusterManagementAddOn"
                   and addon["metadata"]["name"] == "governance-standalone-hub-templating")
