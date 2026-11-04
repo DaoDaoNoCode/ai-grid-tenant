@@ -15,7 +15,11 @@ operator:
           # bypass ext_proc, so MaaS API calls stop failing); until the RHOAI 3.6 payload carries it.
           - name: RELATED_IMAGE_ODH_AI_GATEWAY_CONTROLLER_IMAGE
             value: quay.io/sbatsche/odh-ai-gateway-controller@sha256:3968ba3bf7037ae2eba0c6b9239c4b72ba50ef193fed987caf89649e49467015
-
+dependencies:
+  opentelemetry:
+    olm:
+      # Keep aligned with the cert-manager compatibility grant in apps/rhoai-prerequisites/hub/12-otel-cert-manager-policy.yaml.
+      namespace: openshift-opentelemetry-operator
 # The payload's Grid runtimes. Argo renders these charts, not the operator, so
 # they name the images the operator's payload ships.
 global:

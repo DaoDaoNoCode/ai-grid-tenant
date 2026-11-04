@@ -13,6 +13,8 @@ in the reserved `global` ACM cluster set:
   `registry.redhat.io/rhaii*` mirrors that model images pull through.
 - the Limitador Redis configuration, on remote ingress and combined sites only, that shares MaaS rate-limit
   counters through the Submariner service import.
+- temporary cert-manager permissions for the OpenTelemetry operator on enabled Grid sites
+  with role `ingress`, `inference` or `combined`, including an enabled hub.
 - the catalog ServiceAccount's `imagePullSecrets` wiring is managed by
   `apps/rhoai/catalog`; OLM does not update an already-created catalog
   ServiceAccount when `CatalogSource.spec.secrets` changes.
@@ -39,6 +41,26 @@ and any other registry the hub Secret holds. A bare `quay.io` entry in the hub
 Secret is applied only as `quay.io/rhoai`, so the cluster's own `quay.io` login
 stays. Updating that Secret triggers the normal Machine Config
 Operator rollout to each node.
+
+## OpenTelemetry cert-manager compatibility
+
+The compatibility grant uses `openshift-opentelemetry-operator`, explicitly set in
+`apps/rhoai/values.yaml`. A custom operator namespace requires updating the policy's
+ServiceAccount subject as well. The grant mirrors [RHOAI's supplemental RBAC](https://github.com/opendatahub-io/odh-observability/blob/f7050b59693a1a12da127cbb757d75fa4d125ef5/charts/odh-observability/templates/opentelemetry-cert-manager-rbac.yaml).
+
+OTel caches cert-manager discovery and authorization at startup; Argo sync waves
+do not guarantee these prerequisites are ready first. If OTel started too early,
+confirm policy compliance, cert-manager API availability and operator permissions.
+Replace webhook pods one at a time, maintaining a Ready serving replica and
+waiting for each replacement to be Ready; verify webhook
+endpoints, then replace controller pods one at a time and wait for readiness.
+OLM can revert `rollout restart`.
+Allow RHOAI to retry, then verify collector/allocator readiness, Certificates,
+Monitoring Ready at its current generation, and collector scrape targets.
+
+Retire the workaround only after equivalent product-owned access is verified.
+The policy retains its RBAC on deletion or deselection; explicitly remove the
+compatibility ClusterRoleBinding and ClusterRole through GitOps during retirement.
 
 ## Shared Limitador Redis
 
