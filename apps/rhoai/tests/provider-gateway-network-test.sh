@@ -25,6 +25,9 @@ sources = [source for source in appset["spec"]["template"]["spec"]["sources"]
 assert len(sources) == 1, "expected exactly one RHOAI OCI chart source"
 source = sources[0]
 assert source.get("path") == ".", "expected the RHOAI OCI chart root path"
+assert not any(source.get("path") == "apps/rhoai/grid-model-client"
+               for source in appset["spec"]["template"]["spec"]["sources"]), \
+    "the RHOAI chart must own grid-model-client resources"
 print(source["repoURL"], source["targetRevision"])
 PY
 read -r repo chart_version < "$T/source"
@@ -169,6 +172,10 @@ config_maps = {document["metadata"]["name"]: document for document in documents
                if document.get("kind") == "ConfigMap"}
 deployments = {document["metadata"]["name"]: document for document in documents
                if document.get("kind") == "Deployment"}
+service_accounts = {document["metadata"]["name"] for document in documents
+                    if document.get("kind") == "ServiceAccount"}
+secrets = {document["metadata"]["name"] for document in documents
+           if document.get("kind") == "Secret"}
 payload_image = \
     "registry.redhat.io/rhoai/odh-praxis-ai-grid-gateway-rhel9@sha256:e2ae6ac64b675ec29a4d9a3728f9c9b19063ef21b59dce26542283034592c150"
 
@@ -185,6 +192,16 @@ expected_services = {
 assert set(services) >= expected_services, f"missing services: {expected_services - set(services)}"
 assert set(services).isdisjoint({"grid-gateway", "grid-provider-gateway"} - expected_services), \
     f"unexpected gateways: {set(services) & ({'grid-gateway', 'grid-provider-gateway'} - expected_services)}"
+
+expected_model_clients = {
+    "ingress": set(),
+    "inference": {"grid-model-client", "grid-model-client-token"},
+    "combined": {"grid-model-client", "grid-model-client-token"},
+}[role]
+assert expected_model_clients <= service_accounts | secrets, \
+    f"missing chart-owned model-client resources: {expected_model_clients - (service_accounts | secrets)}"
+assert not ({"grid-model-client", "grid-model-client-token"} - expected_model_clients) & (service_accounts | secrets), \
+    "unexpected model-client resources"
 
 if "grid-gateway" in services:
     consumer = deployments["grid-gateway"]["spec"]["template"]["spec"]
@@ -210,12 +227,12 @@ container = next(item for item in authorino["containers"] if item["name"] == "au
 if role in {"ingress", "combined"}:
     env = {item["name"]: item["value"] for item in container["env"]}
     assert "/etc/pki/tls/certs" in env["SSL_CERT_DIR"], "Authorino lost its trusted CA directory"
-    mounts = {item["name"]: item for item in container["volumeMounts"]}
-    assert mounts["authorino-trusted-ca"]["mountPath"] == "/etc/pki/tls/certs", \
-        "Authorino trust bundle is not mounted"
+    trusted_mount = next((item for item in container["volumeMounts"]
+                          if item["mountPath"] == "/etc/pki/tls/certs"), None)
+    assert trusted_mount is not None, "Authorino trust bundle is not mounted"
     volumes = {item["name"]: item for item in authorino["volumes"]}
     config_maps_mounted = {source["configMap"]["name"]
-                           for source in volumes["authorino-trusted-ca"]["projected"]["sources"]}
+                           for source in volumes[trusted_mount["name"]]["projected"]["sources"]}
     assert config_maps_mounted == {"odh-trusted-ca-bundle", "openshift-service-ca.crt"}, \
         f"unexpected Authorino trust ConfigMaps: {config_maps_mounted}"
 

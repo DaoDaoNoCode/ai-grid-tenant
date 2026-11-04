@@ -50,14 +50,9 @@ spec:
         - repoURL: https://github.com/ai-grid-cloud/ai-grid-cluster-gitops.git
           targetRevision: HEAD
           ref: values
-        # The Grid identity the serving Gateway annotation names in the profile;
-        # whoever writes that annotation provisions it.
-        - repoURL: https://github.com/ai-grid-cloud/ai-grid-cluster-gitops.git
-          targetRevision: HEAD
-          path: apps/rhoai/grid-model-client
         # Immutable OCI snapshot from the 3.6.0 dev channel.
         - repoURL: oci://ghcr.io/opendatahub-io/odh-gitops/rhai-on-openshift-chart
-          targetRevision: 3.6.0-dev.6.1
+          targetRevision: 3.6.0-dev.7.1
           path: .
           helm:
             releaseName: rhai-on-openshift
