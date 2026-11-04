@@ -125,3 +125,42 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: rhoai-tenant-templating
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rhoai-hub-templating-routes
+  namespace: maas-db
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+rules:
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes
+    resourceNames:
+      - keycloak
+    verbs:
+      - get
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes
+    verbs:
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rhoai-hub-templating-routes
+  namespace: maas-db
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+subjects:
+  - kind: Group
+    name: system:open-cluster-management:addon:governance-standalone-hub-templating
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: rhoai-hub-templating-routes

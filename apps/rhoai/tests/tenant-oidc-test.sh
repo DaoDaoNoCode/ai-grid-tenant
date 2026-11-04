@@ -39,6 +39,17 @@ list_watch = next(rule for rule in secret_rules if "list" in rule["verbs"])
 assert set(list_watch["verbs"]) == {"list", "watch"}
 assert "resourceNames" not in list_watch
 
+route_role = next(document for document in rbac_documents
+                  if document and document.get("kind") == "Role"
+                  and document["metadata"]["name"] == "rhoai-hub-templating-routes")
+assert all("secrets" not in rule.get("resources", []) for rule in route_role["rules"])
+route_binding = next(document for document in rbac_documents
+                     if document and document.get("kind") == "RoleBinding"
+                     and document["metadata"]["name"] == "rhoai-hub-templating-routes")
+assert route_binding["subjects"] == [
+    {"kind": "Group", "name": "system:open-cluster-management:addon:governance-standalone-hub-templating"}
+]
+
 addons = [document for document in yaml.safe_load_all(open(sys.argv[3])) if document]
 templating = next(addon for addon in addons
                   if addon.get("kind") == "ClusterManagementAddOn"
