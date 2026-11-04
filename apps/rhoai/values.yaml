@@ -25,6 +25,10 @@ operator:
 # (named after the package) and blocks CSV installs/upgrades. Let RHACM own
 # COO on this cluster until the OG naming is standardized in odh-gitops.
 dependencies:
+  opentelemetry:
+    olm:
+      # Keep aligned with the cert-manager compatibility grant in apps/rhoai-prerequisites/hub/12-otel-cert-manager-policy.yaml.
+      namespace: openshift-opentelemetry-operator
   rhcl:
     olm:
       config:
