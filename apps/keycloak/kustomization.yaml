@@ -6,6 +6,7 @@ resources:
   - manifests/signing-keys.yaml
   - manifests/database.yaml
   - manifests/public-url-policy.yaml
+  - manifests/redirect-uris.yaml
   - manifests/keycloak.yaml
   - manifests/route.yaml
 configMapGenerator:

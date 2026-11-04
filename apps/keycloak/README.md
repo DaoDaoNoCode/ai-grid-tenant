@@ -72,6 +72,23 @@ URL. Plan the corresponding Keycloak realm and client update before relying on
 the new issuer because Keycloak skips imports for realms that already exist in
 PostgreSQL.
 
+## Consumer Portal Redirects
+
+The `keycloak-redirect-uris` CronJob keeps the `tenant-demo` client aligned
+with active AI Grid ingress sites. Every five minutes it lists
+`ManagedClusters` labelled `ai-grid/enabled=true` and
+`ai-grid/role in (ingress,combined)`, derives each cluster's apps domain from
+its `consoleurl.cluster.open-cluster-management.io` claim, and sets the client's
+redirect URIs to:
+
+- `https://maas.<cluster-apps-domain>/oauth2/callback` for each site.
+- `http://localhost:8000/callback` for the browserless smoke test.
+
+The job replaces the complete redirect list, so removing a cluster's ingress or
+combined role removes its callback on the next run. A Keycloak restart imports
+the realm from Git and resets the client to the smoke-test redirect; the next
+CronJob run restores the cluster callbacks.
+
 ## Stable Signing Keys
 
 Each realm uses a dedicated cert-manager-managed RSA signing key. cert-manager

@@ -72,6 +72,29 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
+          name: rhoai-tenant-oidc-client-secret
+        spec:
+          remediationAction: enforce
+          severity: high
+          namespaceSelector:
+            include:
+              - models-as-a-service
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: tenant-demo-oidc-client
+                  namespace: models-as-a-service
+                type: Opaque
+                data:
+                  clientSecret: '{{hub fromSecret "maas-db" "keycloak-secrets" "KEYCLOAK_CLIENT_SECRET" hub}}'
+
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
           name: rhoai-aitenant
         spec:
           remediationAction: enforce
@@ -95,6 +118,9 @@ spec:
                     accessTokenPurposeClaim: token_use
                     clientId: tenant-demo
                     audience: tenant-demo
+                    clientSecretRef:
+                      name: tenant-demo-oidc-client
+                      key: clientSecret
                     # Keycloak on the cluster labelled ai-grid/external-services, at the default Route
                     # host under its apps domain, else Keycloak on the hub.
                     issuerUrl: '{{hub $homes := (lookup "cluster.open-cluster-management.io/v1" "ManagedCluster" "" "" "ai-grid/external-services=true").items hub}}{{hub if $homes hub}}{{hub range (index $homes 0).status.clusterClaims hub}}{{hub if eq .name "consoleurl.cluster.open-cluster-management.io" hub}}{{hub printf "https://keycloak-maas-db.%s/realms/saas" (splitn "." 2 (replace "https://" "" .value))._1 hub}}{{hub end hub}}{{hub end hub}}{{hub else hub}}{{hub printf "https://%s/realms/saas" (index (lookup "route.openshift.io/v1" "Route" "maas-db" "keycloak").status.ingress 0).host hub}}{{hub end hub}}'
