@@ -11,9 +11,6 @@ operator:
       createNamespace: false
       config:
         env:
-          # Temporary change to test maas-api loki proxy
-          - name: RELATED_IMAGE_ODH_MAAS_API_IMAGE
-            value: quay.io/khowell_dev/maas-api:loki-access-proxy
           # AI gateway controller at f36855d (ai-gateway-controller#209: the maas-api routes
           # bypass ext_proc, so MaaS API calls stop failing); until the RHOAI 3.6 payload carries it.
           - name: RELATED_IMAGE_ODH_AI_GATEWAY_CONTROLLER_IMAGE
