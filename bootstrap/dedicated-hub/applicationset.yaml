@@ -17,36 +17,46 @@ spec:
     # Keep deployed resources when the root or a generated Application is removed.
     preserveResourcesOnDeletion: true
   generators:
+    # ACM and argo-registration must start before a cluster Secret exists.
+    - git:
+        repoURL: https://github.com/ai-grid-cloud/ai-grid-cluster-gitops.git
+        revision: HEAD
+        files:
+          - path: apps/acm/application.yaml
+          - path: apps/acm-models/application.yaml
+          - path: apps/ai-grid-o11y/application.yaml
+          - path: apps/ai-grid-policies/application.yaml
+          - path: apps/ai-grid-spokes/application.yaml
+          - path: apps/cert-manager/application.yaml
+          - path: apps/console/application.yaml
+          - path: apps/gitops-config/application.yaml
+          - path: apps/grid-bootstrap/application.yaml
+          - path: apps/external-services/application.yaml
+          - path: apps/maas-db/application.yaml
+          - path: apps/keycloak/application.yaml
+          - path: apps/limitador-redis/application.yaml
+          - path: apps/external-secrets/application.yaml
+          - path: apps/metallb/application.yaml
+          - path: apps/argo-registration/application.yaml
+          - path: apps/rhoai/application.yaml
+          - path: apps/rhoai-prerequisites/application.yaml
+          - path: bootstrap/dedicated-hub/application.yaml
+    # Only ODF needs cluster metadata. Wait for ACM registration and its
+    # version label rather than falling back to the chart's default channel.
     - matrix:
         generators:
           - git:
               repoURL: https://github.com/ai-grid-cloud/ai-grid-cluster-gitops.git
               revision: HEAD
               files:
-                - path: apps/acm/application.yaml
-                - path: apps/acm-models/application.yaml
-                - path: apps/ai-grid-o11y/application.yaml
-                - path: apps/ai-grid-policies/application.yaml
-                - path: apps/ai-grid-spokes/application.yaml
-                - path: apps/cert-manager/application.yaml
-                - path: apps/console/application.yaml
-                - path: apps/gitops-config/application.yaml
-                - path: apps/grid-bootstrap/application.yaml
-                - path: apps/external-services/application.yaml
-                - path: apps/maas-db/application.yaml
-                - path: apps/keycloak/application.yaml
-                - path: apps/limitador-redis/application.yaml
-                - path: apps/external-secrets/application.yaml
-                - path: apps/metallb/application.yaml
-                - path: apps/argo-registration/application.yaml
                 - path: apps/odf/application.yaml
-                - path: apps/rhoai/application.yaml
-                - path: apps/rhoai-prerequisites/application.yaml
-                - path: bootstrap/dedicated-hub/application.yaml
           - clusters:
               selector:
                 matchLabels:
                   apps.open-cluster-management.io/cluster-name: local-cluster
+                matchExpressions:
+                  - key: openshiftVersion-major-minor
+                    operator: Exists
   template:
     metadata:
       name: '{{.metadata.name}}'

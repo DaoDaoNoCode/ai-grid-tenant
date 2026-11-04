@@ -20,7 +20,12 @@ on the hub, installed from its Helm chart: one pod with kube-auth-proxy
   access.
 - **Organizations:** Keycloak Organizations in realm `saas`, through a
   Keycloak user of its own with only the realm-management roles that needs
-  (`view-users`, `query-users`, `view-realm`, `manage-realm`).
+  (`view-users`, `query-users`, `view-realm`, `manage-realm`,
+  `view-identity-providers`, `manage-identity-providers`; the last two link a
+  tenant's own IdP to its organization). `manage-identity-providers` is
+  realm-wide: the backend can edit any IdP in realm `saas`, not only those
+  linked to its organizations. Existing hubs: rerun
+  `apps/console/create-secrets.sh`; no restart needed.
 - **GPUs:** each spoke's GPUs from ACM Search. `manifests/search-rbac.yaml`
   binds the backend to ACM's `global-search-user`, which lets it read every
   managed cluster's indexed resources: more than the GPU nodes it asks for, so
