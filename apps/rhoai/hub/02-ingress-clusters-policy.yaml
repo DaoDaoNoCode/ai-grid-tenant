@@ -78,7 +78,7 @@ spec:
           severity: high
           namespaceSelector:
             include:
-              - models-as-a-service
+              - ai-tenants
           object-templates:
             - complianceType: musthave
               objectDefinition:
@@ -86,7 +86,7 @@ spec:
                 kind: Secret
                 metadata:
                   name: tenant-demo-oidc-client
-                  namespace: models-as-a-service
+                  namespace: ai-tenants
                 type: Opaque
                 data:
                   clientSecret: '{{hub fromSecret "maas-db" "keycloak-secrets" "KEYCLOAK_CLIENT_SECRET" hub}}'

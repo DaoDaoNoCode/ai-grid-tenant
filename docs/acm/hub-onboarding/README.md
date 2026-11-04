@@ -42,7 +42,7 @@ Delivered by the acm Argo app ([apps/acm/manifests](../../../apps/acm/manifests)
 1. OperatorGroup targeting open-cluster-management.
 2. Subscription advanced-cluster-management, channel release-2.17, source redhat-operators.
 3. MultiClusterHub with an empty spec. The hub registers itself as local-cluster.
-4. A ManagedClusterSetBinding for global, a Placement over global, and ClusterManagementAddOns governance-policy-framework and config-policy-controller installed through that Placement. Every cluster then runs policies, the hub included.
+4. A ManagedClusterSetBinding for global, a Placement over global, and ClusterManagementAddOns governance-policy-framework, config-policy-controller, and governance-standalone-hub-templating installed through that Placement. Every cluster then runs policies and can resolve hub templates, the hub included.
 5. Import each spoke. It joins the global set. See [cluster onboarding](../cluster-onboarding/README.md):
 
 ```bash
