@@ -163,8 +163,10 @@ check_contract() {
      python3 - "$T/render.yaml" "$HERE/../hub/02-ingress-clusters-policy.yaml" "$role" <<'PY'
 import sys
 import yaml
+from pathlib import Path
 
 render_path, policy_path, role = sys.argv[1:]
+rbac_path = Path(policy_path).with_name("00-tenant-templating-rbac.yaml")
 documents = [document for document in yaml.safe_load_all(open(render_path)) if document]
 services = {document["metadata"]["name"]: document for document in documents
             if document.get("kind") == "Service"}
@@ -245,6 +247,18 @@ assert "home-keycloak-ca" in ca_raw, "ACM lost the home Keycloak CA distribution
 assert "operator.authorino.kuadrant.io/v1beta1" in ca_raw, "ACM lost the Authorino CR volume contract"
 hub_branch = ca_raw.split("{{hub- else hub}}", 1)[0]
 assert "binaryData:" in hub_branch, "combined-hub Authorino CA branch is empty"
+assert 'fromSecret "openshift-ingress-operator" "router-ca" "tls.crt"' in ca_raw, \
+    "home CA must use fromSecret so templating RBAC remains least-privilege"
+assert 'lookup "v1" "Secret"' not in ca_raw, \
+    "home CA lookup would require Secret list and watch permissions"
+rbac_documents = list(yaml.safe_load_all(open(rbac_path)))
+ingress_role = next(document for document in rbac_documents
+                     if document and document.get("kind") == "Role"
+                     and document["metadata"]["namespace"] == "openshift-ingress-operator")
+secret_rule = next(rule for rule in ingress_role["rules"]
+                   if rule["resources"] == ["secrets"])
+assert secret_rule["resourceNames"] == ["router-ca"], "home CA Role must target router-ca"
+assert secret_rule["verbs"] == ["get"], "home CA Role must only get router-ca"
 configuration = next(template["objectDefinition"] for template in templates
                      if template["objectDefinition"]["metadata"]["name"] == "rhoai-grid-external-provider")
 external_provider = next(object_template["objectDefinition"]
