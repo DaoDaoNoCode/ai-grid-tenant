@@ -91,9 +91,9 @@ keycloak_host="$(k get route keycloak -n "$keycloak_namespace" -o jsonpath='{.st
 [ -n "$keycloak_host" ] || die "route $keycloak_namespace/keycloak has no host"
 backend_keycloak_url="${KEYCLOAK_BACKEND_URL:-https://$keycloak_host}"
 
-# Keycloak: a backend user that may manage organizations in one realm (the
-# backend calls only the organizations and their members), not the master
-# realm's admin.
+# Keycloak: a backend user that may manage organizations and their identity
+# providers in one realm (Tenants/Create links a tenant's own IdP), not the
+# master realm's admin.
 admin_user="$(secret_value "$keycloak_namespace" keycloak-secrets KC_BOOTSTRAP_ADMIN_USERNAME)"
 [ -n "$admin_user" ] || die "secret $keycloak_namespace/keycloak-secrets has no KC_BOOTSTRAP_ADMIN_USERNAME"
 token="$(secret_value "$keycloak_namespace" keycloak-secrets KC_BOOTSTRAP_ADMIN_PASSWORD |
@@ -150,7 +150,7 @@ PW="$backend_password" jq -n '{type: "password", value: env.PW, temporary: false
   api -X PUT "$base/users/$user_id/reset-password" -d @- >/dev/null
 realm_management="$(api "$base/clients?clientId=realm-management" | jq -re '.[0].id')"
 api "$base/clients/$realm_management/roles" |
-  jq '[.[] | select(.name | IN("view-users", "query-users", "view-realm", "manage-realm"))]' |
+  jq '[.[] | select(.name | IN("view-users", "query-users", "view-realm", "manage-realm", "view-identity-providers", "manage-identity-providers"))]' |
   api -X POST "$base/users/$user_id/role-mappings/clients/$realm_management" -d @- >/dev/null
 PW="$backend_password" BACKEND_USER_ID="$user_id" jq -n --arg ns "$namespace" --arg url "$backend_keycloak_url" --arg realm "$realm" --arg user "$backend_user" \
   '{apiVersion: "v1", kind: "Secret", metadata: {name: "ai-grid-backend-keycloak", namespace: $ns}, type: "Opaque",
