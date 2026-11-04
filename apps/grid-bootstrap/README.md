@@ -1,7 +1,7 @@
 # Grid bootstrap
 
 This hub Application deploys the existing `grid-enrollment` chart from
-`odh-gitops:feature-ai-grid` in external mode. `managedClusters.enabled` selects
+`odh-gitops:main` in external mode. `managedClusters.enabled` selects
 inventory-based enrollment through the common ACM/OCM APIs. The chart itself
 has no Argo-specific switch.
 

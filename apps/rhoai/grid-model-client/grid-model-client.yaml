@@ -1,0 +1,21 @@
+# The identity grid gateways present to the serving gateway on a local dial.
+# odh-model-controller grants it get on each model; give it nothing else.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grid-model-client
+  namespace: redhat-ai-grid
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+automountServiceAccountToken: false
+---
+# Kubernetes fills the token in; the ApplicationSet ignores its data.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grid-model-client-token
+  namespace: redhat-ai-grid
+  annotations:
+    kubernetes.io/service-account.name: grid-model-client
+    argocd.argoproj.io/sync-wave: "-2"
+type: kubernetes.io/service-account-token

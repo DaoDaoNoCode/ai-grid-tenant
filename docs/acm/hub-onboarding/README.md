@@ -194,7 +194,7 @@ flowchart TD
 
 * Grid, v0.3.0-rc.2: https://github.com/praxis-proxy/grid/tree/v0.3.0-rc.2
 * grid-enrollment chart: https://github.com/praxis-proxy/grid/tree/v0.3.0-rc.2/charts/grid-enrollment
-* Vendored chart the lab installs: https://github.com/opendatahub-io/odh-gitops/tree/feature-ai-grid/charts/rhai-on-openshift-chart/charts/grid-enrollment
+* Vendored chart the lab installs: https://github.com/opendatahub-io/odh-gitops/tree/main/charts/rhai-on-openshift-chart/charts/grid-enrollment
 * Lab tenant: https://github.com/ai-grid-cloud/ai-grid-cluster-gitops
 * Argo bootstrap: https://github.com/ai-grid-cloud/ai-grid-cluster-gitops/blob/main/bootstrap.sh
 * ACM manifests: https://github.com/ai-grid-cloud/ai-grid-cluster-gitops/tree/main/apps/acm/manifests

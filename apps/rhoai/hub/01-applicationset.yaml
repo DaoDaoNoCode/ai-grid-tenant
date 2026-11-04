@@ -50,17 +50,13 @@ spec:
         - repoURL: https://github.com/ai-grid-cloud/ai-grid-cluster-gitops.git
           targetRevision: HEAD
           ref: values
-        # Temporary v0.3.0-rc.2 schemas until the RHOAI manifest bundle catches up.
-        # The overlay hands CRD management to Argo and protects them from pruning.
-        # See odh-gitops/components/ai-grid-crds/README.md for the ownership handoff.
+        # The Grid identity the serving Gateway annotation names in values.yaml;
+        # whoever writes that annotation provisions it.
+        - repoURL: https://github.com/ai-grid-cloud/ai-grid-cluster-gitops.git
+          targetRevision: HEAD
+          path: apps/rhoai/grid-model-client
         - repoURL: https://github.com/opendatahub-io/odh-gitops.git
-          targetRevision: feature-ai-grid
-          path: components/ai-grid-crds
-        # Pinned to a feature branch carrying operator.olm.createNamespace until
-        # the change is available upstream. This lets ACM own protected
-        # Namespaces while the chart still owns the OLM operator resources.
-        - repoURL: https://github.com/opendatahub-io/odh-gitops.git
-          targetRevision: feature-ai-grid
+          targetRevision: main
           path: charts/rhai-on-openshift-chart
           helm:
             releaseName: rhai-on-openshift
