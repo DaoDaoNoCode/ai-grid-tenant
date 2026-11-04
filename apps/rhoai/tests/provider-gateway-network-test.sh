@@ -247,18 +247,25 @@ assert "home-keycloak-ca" in ca_raw, "ACM lost the home Keycloak CA distribution
 assert "operator.authorino.kuadrant.io/v1beta1" in ca_raw, "ACM lost the Authorino CR volume contract"
 hub_branch = ca_raw.split("{{hub- else hub}}", 1)[0]
 assert "binaryData:" in hub_branch, "combined-hub Authorino CA branch is empty"
-assert 'fromSecret "openshift-ingress-operator" "router-ca" "tls.crt"' in ca_raw, \
-    "home CA must use fromSecret so templating RBAC remains least-privilege"
+assert 'fromConfigMap "openshift-config-managed" "default-ingress-cert" "ca-bundle.crt"' in ca_raw, \
+    "home CA must use the public default ingress certificate ConfigMap"
+assert "fromSecret " not in ca_raw, \
+    "home CA templating must not require Secret access"
 assert 'lookup "v1" "Secret"' not in ca_raw, \
     "home CA lookup would require Secret list and watch permissions"
 rbac_documents = list(yaml.safe_load_all(open(rbac_path)))
-ingress_role = next(document for document in rbac_documents
-                     if document and document.get("kind") == "Role"
-                     and document["metadata"]["namespace"] == "openshift-ingress-operator")
-secret_rule = next(rule for rule in ingress_role["rules"]
-                   if rule["resources"] == ["secrets"])
-assert secret_rule["resourceNames"] == ["router-ca"], "home CA Role must target router-ca"
-assert secret_rule["verbs"] == ["get"], "home CA Role must only get router-ca"
+roles = [document for document in rbac_documents
+         if document and document.get("kind") == "Role"]
+assert not any(role["metadata"]["namespace"] == "openshift-ingress-operator" for role in roles), \
+    "home CA templating must not use ingress-operator Secret RBAC"
+managed_config_role = next(role for role in roles
+                           if role["metadata"]["namespace"] == "openshift-config-managed")
+config_map_rule = next(rule for rule in managed_config_role["rules"]
+                       if rule["resources"] == ["configmaps"])
+assert "resourceNames" not in config_map_rule, \
+    "ConfigMap list and watch permissions cannot be constrained by resourceNames"
+assert config_map_rule["verbs"] == ["get", "list", "watch"], \
+    "home CA Role must only read public ingress ConfigMaps"
 configuration = next(template["objectDefinition"] for template in templates
                      if template["objectDefinition"]["metadata"]["name"] == "rhoai-grid-external-provider")
 external_provider = next(object_template["objectDefinition"]

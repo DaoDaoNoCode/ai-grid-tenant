@@ -33,7 +33,7 @@ spec:
                   name: home-keycloak-ca
                   namespace: kuadrant-system
                 binaryData:
-                  ca-bundle.crt: '{{hub fromSecret "openshift-ingress-operator" "router-ca" "tls.crt" hub}}'
+                  ca-bundle.crt: '{{hub fromConfigMap "openshift-config-managed" "default-ingress-cert" "ca-bundle.crt" | base64enc hub}}'
             {{hub- else hub}}
             - complianceType: musthave
               objectDefinition:
