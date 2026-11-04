@@ -13,6 +13,15 @@ in the reserved `global` ACM cluster set:
   `registry.redhat.io/rhaii*` mirrors that model images pull through.
 - the Limitador Redis configuration, on remote ingress and combined sites only, that shares MaaS rate-limit
   counters through the Submariner service import.
+- the hub-only `rhai-metrics` addon registration and, on enabled grid sites,
+  the NetworkPolicy admitting the local ACM agents to each RHOAI collector's
+  HTTPS exporter on port 8889. It retries until RHOAI creates its monitoring
+  namespace and replaces the hub-only policy in `ai-grid-o11y`; the initial
+  prune/reconcile handoff can briefly interrupt these scrapes. Do not also
+  deploy an ApplicationSet managing that NetworkPolicy. Only the addon's copied
+  scrape pool keeps targets, preventing duplicate collection on the hub.
+  Removing the registration policy does not withdraw its addon tuple; that
+  requires a separate migration preserving the other configs.
 - temporary cert-manager permissions for the OpenTelemetry operator on enabled Grid sites
   with role `ingress`, `inference` or `combined`, including an enabled hub.
 - the catalog ServiceAccount's `imagePullSecrets` wiring is managed by
