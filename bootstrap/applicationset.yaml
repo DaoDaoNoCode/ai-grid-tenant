@@ -3,12 +3,15 @@ kind: ApplicationSet
 metadata:
   name: apps
   namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   syncPolicy:
     applicationsSync: sync
-    preserveResourcesOnDeletion: false
+    # Keep deployed resources when the root or a generated Application is removed.
+    preserveResourcesOnDeletion: true
   generators:
     - git:
         repoURL: https://github.com/ai-grid-cloud/ai-grid-cluster-gitops.git

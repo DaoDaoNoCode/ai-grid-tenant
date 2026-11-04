@@ -33,6 +33,8 @@ oc apply -f bootstrap/dedicated-hub/applicationset.yaml   # dedicated hub
 
 Every Application it generates syncs from Git on its own.
 
+Both roots set `preserveResourcesOnDeletion: true`: deleting a root, or removing an app from its generator, removes the Application but leaves its deployed resources running, so clean those up separately. An explicit cascading delete from the Argo UI or API can still delete an Application's unprotected resources.
+
 ## Installing ACM
 
 Delivered by the acm Argo app ([apps/acm/manifests](../../../apps/acm/manifests), ACM 2.17.3), in namespace open-cluster-management:
