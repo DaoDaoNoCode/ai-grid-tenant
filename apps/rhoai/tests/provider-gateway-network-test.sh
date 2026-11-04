@@ -233,7 +233,7 @@ if role in {"ingress", "combined"}:
     volumes = {item["name"]: item for item in authorino["volumes"]}
     config_maps_mounted = {source["configMap"]["name"]
                            for source in volumes[trusted_mount["name"]]["projected"]["sources"]}
-    assert config_maps_mounted == {"odh-trusted-ca-bundle", "openshift-service-ca.crt"}, \
+    assert config_maps_mounted == {"odh-trusted-ca-bundle", "openshift-service-ca.crt", "home-keycloak-ca"}, \
         f"unexpected Authorino trust ConfigMaps: {config_maps_mounted}"
 
 policy = yaml.safe_load(open(policy_path))

@@ -110,20 +110,28 @@ as an override when present.
   not install.
 - No registry setup. Policies deliver the pull Secrets and the image mirror.
 
-## Trusting the external-services cluster's ingress CA
+## Trusting the MaaS home's ingress CA
 
-Authorino on a MaaS site performs OpenID discovery against the external-services cluster's
+Authorino on a MaaS site performs OpenID discovery against the MaaS home's
 Keycloak Route and validates API keys against maas-api over the OpenShift
 service CA. The RHOAI chart's `ai-grid-ingress` and `ai-grid-combined` profiles
-mount two ConfigMaps for that, `odh-trusted-ca-bundle` and
-`openshift-service-ca.crt`, which must exist in the Authorino namespace of every
-ingress or combined site.
+mount three ConfigMaps for that: `odh-trusted-ca-bundle`,
+`openshift-service-ca.crt`, and `home-keycloak-ca`.
 
-If the external-services cluster's Keycloak Route presents a certificate that chains to a public
-root, nothing else is needed. Otherwise the CA that issued that certificate
-must be in the site's cluster trust, which RHOAI copies into
-`odh-trusted-ca-bundle`. `trust-external-services-ca.sh` in this directory does that,
-with `KUBECONFIG` pointing at the site:
+When the hub is also the MaaS home, `rhoai-ingress-clusters` reads the hub's
+public `router-ca` certificate and creates `home-keycloak-ca` in
+`kuadrant-system` on every ingress or combined site. The role values project
+that ConfigMap directly into Authorino, so no site-wide
+`proxy/cluster.spec.trustedCA` mutation is needed. If the home's Keycloak Route
+presents a certificate that chains to a public root, the extra ConfigMap is
+harmless and the same flow still works.
+
+When MaaS's shared state is on a dedicated cluster labelled
+`ai-grid/external-services=true`, the hub cannot read that cluster's
+`router-ca` Secret directly. The Policy therefore creates an empty
+`home-keycloak-ca` placeholder so the Authorino volume contract remains valid,
+and the real home CA must be added to the site's cluster trust. Use
+`trust-external-services-ca.sh` with `KUBECONFIG` pointing at the site:
 
 ```
 HOME_KUBECONFIG=<external-services cluster kubeconfig> KEYCLOAK_HOST=<Keycloak Route host> REALM=<MaaS realm> \
@@ -150,7 +158,8 @@ tenants.
 `tests/trust-external-services-ca-test.sh` exercises it against stub `oc` and `curl`
 binaries with real certificates.
 
-A site that needs more CA ConfigMaps lists the complete set in
+The placeholder carries no certificate and does not extend trust. A site that
+needs more CA ConfigMaps lists the complete set in
 `apps/rhoai/values-<cluster>.yaml` under
 `dependencies.rhcl.config.authorinoTrustedCA.configMaps`. The chart patches only
 its named Authorino volume and leaves other Deployment volumes intact.

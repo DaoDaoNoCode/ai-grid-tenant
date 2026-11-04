@@ -99,11 +99,13 @@ registration still go to every managed cluster, site or not.
 
 ## Changing a site to ingress or combined
 
-The MaaS it gains validates users against the external-services cluster's Keycloak over the external-services cluster's
-Route. If that Route's certificate is not publicly trusted, the site's cluster
-trust must carry the external-services cluster's ingress CA before the role is set; the procedure
-is in `docs/acm/cluster-onboarding/README.md` ("Trusting the external-services cluster's
-ingress CA"). The RHOAI AI Grid profiles then mount the cluster trust bundle and
-the service CA into the site's Authorino; a site that needs more CA ConfigMaps
-lists the complete set in `apps/rhoai/values-<cluster>.yaml` under
+The MaaS it gains validates users against the MaaS home's Keycloak Route. On a
+combined hub, the `rhoai-ingress-clusters` Policy publishes the hub's public
+ingress CA as `kuadrant-system/home-keycloak-ca`, and the ingress and combined
+role values mount it directly in Authorino. On a dedicated external-services
+home, the Policy creates an empty `home-keycloak-ca` placeholder; if the home's
+certificate is not publicly trusted, follow the cluster trust procedure in
+`docs/acm/cluster-onboarding/README.md` ("Trusting the MaaS home's ingress
+CA"). A site that needs more CA ConfigMaps lists the complete set in
+`apps/rhoai/values-<cluster>.yaml` under
 `dependencies.rhcl.config.authorinoTrustedCA.configMaps`.

@@ -15,6 +15,39 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
+          name: rhoai-authorino-home-keycloak-ca
+        spec:
+          remediationAction: enforce
+          severity: high
+          namespaceSelector:
+            include:
+              - kuadrant-system
+          object-templates-raw: |
+            {{hub- $homes := lookup "cluster.open-cluster-management.io/v1" "ManagedCluster" "" "" "ai-grid/external-services=true" hub}}
+            {{hub- if $homes hub}}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: home-keycloak-ca
+                  namespace: kuadrant-system
+            {{hub- else hub}}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: home-keycloak-ca
+                  namespace: kuadrant-system
+                binaryData:
+                  ca-bundle.crt: '{{hub $homeCa := lookup "v1" "Secret" "openshift-ingress-operator" "router-ca" hub}}{{hub index $homeCa.data "tls.crt" hub}}'
+            {{hub- end hub}}
+
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
           name: rhoai-aitenant
         spec:
           remediationAction: enforce

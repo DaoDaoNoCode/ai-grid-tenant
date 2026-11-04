@@ -1,1 +1,10 @@
 profile: ai-grid-combined
+
+dependencies:
+  rhcl:
+    config:
+      authorinoTrustedCA:
+        configMaps:
+          - odh-trusted-ca-bundle
+          - openshift-service-ca.crt
+          - home-keycloak-ca
