@@ -23,8 +23,8 @@ spec:
             include:
               - kuadrant-system
           object-templates-raw: |
-            {{hub- $homes := lookup "cluster.open-cluster-management.io/v1" "ManagedCluster" "" "" "ai-grid/external-services=true" hub}}
-            {{hub- if $homes hub}}
+            {{hub- $hubKeycloak := lookup "route.openshift.io/v1" "Route" "maas-db" "keycloak" hub}}
+            {{hub- if $hubKeycloak hub}}
             - complianceType: musthave
               objectDefinition:
                 apiVersion: v1
@@ -43,6 +43,25 @@ spec:
                 binaryData:
                   ca-bundle.crt: '{{hub $homeCa := lookup "v1" "Secret" "openshift-ingress-operator" "router-ca" hub}}{{hub index $homeCa.data "tls.crt" hub}}'
             {{hub- end hub}}
+            {{- if (lookup "operator.authorino.kuadrant.io/v1beta1" "Authorino" "kuadrant-system" "authorino") }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: operator.authorino.kuadrant.io/v1beta1
+                kind: Authorino
+                metadata:
+                  name: authorino
+                  namespace: kuadrant-system
+                spec:
+                  volumes:
+                    defaultMode: 420
+                    items:
+                      - name: trusted-ca-bundle
+                        mountPath: /etc/pki/tls/certs
+                        configMaps:
+                          - odh-trusted-ca-bundle
+                          - openshift-service-ca.crt
+                          - home-keycloak-ca
+            {{- end }}
 
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1

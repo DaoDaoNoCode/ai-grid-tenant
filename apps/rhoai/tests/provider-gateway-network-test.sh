@@ -238,6 +238,11 @@ if role in {"ingress", "combined"}:
 
 policy = yaml.safe_load(open(policy_path))
 templates = policy["spec"]["policy-templates"]
+ca_configuration = next(template["objectDefinition"] for template in templates
+                        if template["objectDefinition"]["metadata"]["name"] == "rhoai-authorino-home-keycloak-ca")
+ca_raw = ca_configuration["spec"]["object-templates-raw"]
+assert "home-keycloak-ca" in ca_raw, "ACM lost the home Keycloak CA distribution"
+assert "operator.authorino.kuadrant.io/v1beta1" in ca_raw, "ACM lost the Authorino CR volume contract"
 configuration = next(template["objectDefinition"] for template in templates
                      if template["objectDefinition"]["metadata"]["name"] == "rhoai-grid-external-provider")
 external_provider = next(object_template["objectDefinition"]

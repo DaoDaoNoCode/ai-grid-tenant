@@ -102,8 +102,9 @@ registration still go to every managed cluster, site or not.
 The MaaS it gains validates users against the MaaS home's Keycloak Route. On a
 combined hub, the `rhoai-ingress-clusters` Policy publishes the hub's public
 ingress CA as `kuadrant-system/home-keycloak-ca`, and the ingress and combined
-role values mount it directly in Authorino. On a dedicated external-services
-home, the Policy creates an empty `home-keycloak-ca` placeholder; if the home's
+role values and Authorino CR mount it directly in Authorino. On a dedicated
+external-services home, the Policy creates an empty `home-keycloak-ca`
+placeholder; if the home's
 certificate is not publicly trusted, follow the cluster trust procedure in
 `docs/acm/cluster-onboarding/README.md` ("Trusting the MaaS home's ingress
 CA"). A site that needs more CA ConfigMaps lists the complete set in

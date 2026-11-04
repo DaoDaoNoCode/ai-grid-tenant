@@ -121,7 +121,8 @@ mount three ConfigMaps for that: `odh-trusted-ca-bundle`,
 When the hub is also the MaaS home, `rhoai-ingress-clusters` reads the hub's
 public `router-ca` certificate and creates `home-keycloak-ca` in
 `kuadrant-system` on every ingress or combined site. The role values project
-that ConfigMap directly into Authorino, so no site-wide
+that ConfigMap directly into Authorino, and the Policy adds it to the Authorino
+CR's volume contract so the operator and Argo CD agree. No site-wide
 `proxy/cluster.spec.trustedCA` mutation is needed. If the home's Keycloak Route
 presents a certificate that chains to a public root, the extra ConfigMap is
 harmless and the same flow still works.
