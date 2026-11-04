@@ -1,7 +1,7 @@
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
-  name: rhoai-tenant
+  name: rhoai-ingress-clusters
   namespace: redhat-ai-grid
   annotations:
     argocd.argoproj.io/sync-wave: "4"
@@ -11,6 +11,58 @@ spec:
   hubTemplateOptions:
     serviceAccountName: rhoai-tenant-templating
   policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: rhoai-authorino-home-keycloak-ca
+        spec:
+          remediationAction: enforce
+          severity: high
+          namespaceSelector:
+            include:
+              - kuadrant-system
+          object-templates-raw: |
+            {{hub- $hubKeycloak := lookup "route.openshift.io/v1" "Route" "maas-db" "keycloak" hub}}
+            {{hub- if $hubKeycloak hub}}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: home-keycloak-ca
+                  namespace: kuadrant-system
+                binaryData:
+                  ca-bundle.crt: '{{hub fromConfigMap "openshift-config-managed" "default-ingress-cert" "ca-bundle.crt" | base64enc hub}}'
+            {{hub- else hub}}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: home-keycloak-ca
+                  namespace: kuadrant-system
+            {{hub- end hub}}
+            {{- if (lookup "operator.authorino.kuadrant.io/v1beta1" "Authorino" "kuadrant-system" "authorino") }}
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: operator.authorino.kuadrant.io/v1beta1
+                kind: Authorino
+                metadata:
+                  name: authorino
+                  namespace: kuadrant-system
+                spec:
+                  volumes:
+                    defaultMode: 420
+                    items:
+                      - name: trusted-ca-bundle
+                        mountPath: /etc/pki/tls/certs
+                        configMaps:
+                          - odh-trusted-ca-bundle
+                          - openshift-service-ca.crt
+                          - home-keycloak-ca
+            {{- end }}
+
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy

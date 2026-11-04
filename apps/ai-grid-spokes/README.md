@@ -89,7 +89,7 @@ the old role's values for up to about a minute before it converges.
   namespace and its ClusterSet binding).
 
 Policies in other apps select the same sites: the tenant Policy
-(`apps/rhoai/hub/03-tenant-placement.yaml`: the AITenant, the MaaS tenant
+(`apps/rhoai/hub/03-ingress-clusters-placement.yaml`: the AITenant, the MaaS tenant
 config and the grid `ExternalProvider`) and `maas-db`'s credentials go to
 sites with role ingress or combined.
 `rhoai-prerequisites` (with the model namespace and its NetworkPolicies, the
@@ -99,11 +99,14 @@ registration still go to every managed cluster, site or not.
 
 ## Changing a site to ingress or combined
 
-The MaaS it gains validates users against the external-services cluster's Keycloak over the external-services cluster's
-Route. If that Route's certificate is not publicly trusted, the site's cluster
-trust must carry the external-services cluster's ingress CA before the role is set; the procedure
-is in `docs/acm/cluster-onboarding/README.md` ("Trusting the external-services cluster's
-ingress CA"). `apps/rhoai/maas-sites` then mounts the cluster trust bundle and
-the service CA into the site's Authorino; a site that already mounts volumes
-into Authorino lists them in `apps/rhoai/maas-sites/values-<cluster>.yaml`
-under `authorino.extraVolumeItems`.
+The MaaS it gains validates users against the MaaS home's Keycloak Route. On a
+combined hub, the `rhoai-ingress-clusters` Policy publishes the hub's public
+ingress CA as `kuadrant-system/home-keycloak-ca`, and the ingress and combined
+role values and Authorino CR mount it directly in Authorino. On a dedicated
+external-services home, the Policy creates an empty `home-keycloak-ca`
+placeholder; if the home's
+certificate is not publicly trusted, follow the cluster trust procedure in
+`docs/acm/cluster-onboarding/README.md` ("Trusting the MaaS home's ingress
+CA"). A site that needs more CA ConfigMaps lists the complete set in
+`apps/rhoai/values-<cluster>.yaml` under
+`dependencies.rhcl.config.authorinoTrustedCA.configMaps`.
