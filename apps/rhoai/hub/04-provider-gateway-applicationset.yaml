@@ -11,8 +11,9 @@ metadata:
 spec:
   goTemplate: true
   syncPolicy:
-    # Removing the label stops managing a cluster's workloads; it does not uninstall them.
-    preserveResourcesOnDeletion: true
+    # Deleting this ApplicationSet, or removing a site from its Placement,
+    # also deletes the generated Application and its managed resources.
+    preserveResourcesOnDeletion: false
   goTemplateOptions: ["missingkey=error"]
   generators:
     # The Placement's live decisions joined with Argo CD's cluster Secret
