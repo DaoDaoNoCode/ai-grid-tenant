@@ -18,6 +18,11 @@ spec:
         revision: HEAD
         files:
           - path: apps/*/application.yaml
+          # The usage-log store belongs to the dedicated-hub profile. A standard hub
+          # already runs apps/ai-grid-o11y, so generating this app here would stand
+          # up a second LokiStack and a second object bucket beside it.
+          - path: apps/ai-grid-usage-logs/application.yaml
+            exclude: true
           # Only the dedicated-hub profile installs cert-manager, registers clusters and runs MaaS on a site.
           - path: apps/cert-manager/application.yaml
             exclude: true
