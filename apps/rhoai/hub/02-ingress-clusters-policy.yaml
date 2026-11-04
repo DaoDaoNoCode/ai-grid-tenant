@@ -32,6 +32,8 @@ spec:
                 metadata:
                   name: home-keycloak-ca
                   namespace: kuadrant-system
+                binaryData:
+                  ca-bundle.crt: '{{hub $homeCa := lookup "v1" "Secret" "openshift-ingress-operator" "router-ca" hub}}{{hub index $homeCa.data "tls.crt" hub}}'
             {{hub- else hub}}
             - complianceType: musthave
               objectDefinition:
@@ -40,8 +42,6 @@ spec:
                 metadata:
                   name: home-keycloak-ca
                   namespace: kuadrant-system
-                binaryData:
-                  ca-bundle.crt: '{{hub $homeCa := lookup "v1" "Secret" "openshift-ingress-operator" "router-ca" hub}}{{hub index $homeCa.data "tls.crt" hub}}'
             {{hub- end hub}}
             {{- if (lookup "operator.authorino.kuadrant.io/v1beta1" "Authorino" "kuadrant-system" "authorino") }}
             - complianceType: musthave
