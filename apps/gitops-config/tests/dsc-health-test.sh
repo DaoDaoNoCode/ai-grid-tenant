@@ -39,9 +39,10 @@ F = {
   {"shape-other-gateway-message", dsc("Not Ready", shape({{"AIGatewayReady","False","1/2 deployments ready"}}), "Removed", 1, 1), "Progressing"},
   {"shape-but-maas-managed", dsc("Not Ready", shape(), "Managed", 1, 1), "Progressing"},
   {"ready-false-after-reconcile", dsc("Ready", {{"Ready","False","not ready"},{"Degraded","False"}}, "Managed", 1, 1), "Degraded"},
-  {"shape-missing-progressing-condition", dsc("Not Ready", shape({{"Progressing", nil}}), "Removed", 1, 1), "Progressing"},
-  {"shape-missing-degraded-condition", dsc("Not Ready", shape({{"Degraded", nil}}), "Removed", 1, 1), "Progressing"},
-  {"shape-missing-observed-generation", dsc("Not Ready", shape(), "Removed", 1, nil), "Progressing"},
+  {"shape-missing-progressing-condition", dsc("Not Ready", shape({{"Progressing", nil}}), "Removed", 1, 1), "Healthy"},
+  {"shape-missing-degraded-condition", dsc("Not Ready", shape({{"Degraded", nil}}), "Removed", 1, 1), "Healthy"},
+  {"shape-missing-observed-generation", dsc("Not Ready", shape(), "Removed", 1, nil), "Healthy"},
+  {"current-operator-shape", dsc("Not Ready", {{"KserveReady","True"},{"AIGridReady","True"},{"ProvisioningSucceeded","True"},{"ComponentsReady","True"},{"AIGatewayReady","False","0/0 deployments ready"},{"Ready","False","Some modules are not ready: aigateway"},{"ModulesReady","False","Some modules are not ready: aigateway"},{"KserveConfidentialContainerDependencies","False","no runtime","PreConditionFailed"}}, "Removed", 4, nil), "Healthy"},
   {"shape-with-unknown-degraded", dsc("Not Ready", shape({{"Degraded","Unknown"}}), "Removed", 1, 1), "Progressing"},
   {"fixed-build-gateway-ready", dsc("Ready", {{"Ready","True"},{"AIGatewayReady","True"},{"Progressing","False"},{"Degraded","False"}}, "Removed", 1, 1), "Healthy"},
 }

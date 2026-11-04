@@ -137,8 +137,9 @@ spec:
           local maas = obj.spec and obj.spec.components and obj.spec.components.aigateway
             and obj.spec.components.aigateway.modelsAsAService
             and obj.spec.components.aigateway.modelsAsAService.managementState
-          local currentGeneration = obj.metadata.generation ~= nil and obj.status.observedGeneration ~= nil
-            and obj.status.observedGeneration == obj.metadata.generation
+          -- Current 3.6 builds set no observedGeneration, as the generic check above allows.
+          local currentGeneration = obj.status.observedGeneration == nil
+            or obj.status.observedGeneration == obj.metadata.generation
           if maas == "Removed" and currentGeneration then
             local function has(t, status, message)
               for _, c in ipairs(obj.status.conditions) do
@@ -153,7 +154,6 @@ spec:
               and has("AIGatewayReady", "False", "0/0 deployments ready")
               and has("Ready", "False", "Some modules are not ready: aigateway")
               and has("ModulesReady", "False", "Some modules are not ready: aigateway")
-              and has("Progressing", "False") and has("Degraded", "False")
             if shape then
               for _, c in ipairs(obj.status.conditions) do
                 if (c.type == "Progressing" or c.type == "Degraded") and c.status ~= "False" then shape = false end
