@@ -114,9 +114,10 @@ as an override when present.
 
 Authorino on a MaaS site performs OpenID discovery against the external-services cluster's
 Keycloak Route and validates API keys against maas-api over the OpenShift
-service CA. The trust patch in `apps/rhoai/maas-sites` mounts two ConfigMaps
-for that, `odh-trusted-ca-bundle` and `openshift-service-ca.crt`, which must
-exist in the Authorino namespace of every ingress or combined site.
+service CA. The RHOAI chart's `ai-grid-ingress` and `ai-grid-combined` profiles
+mount two ConfigMaps for that, `odh-trusted-ca-bundle` and
+`openshift-service-ca.crt`, which must exist in the Authorino namespace of every
+ingress or combined site.
 
 If the external-services cluster's Keycloak Route presents a certificate that chains to a public
 root, nothing else is needed. Otherwise the CA that issued that certificate
@@ -149,9 +150,10 @@ tenants.
 `tests/trust-external-services-ca-test.sh` exercises it against stub `oc` and `curl`
 binaries with real certificates.
 
-A site that already mounts volumes into Authorino lists them in
-`apps/rhoai/maas-sites/values-<cluster>.yaml` under `authorino.extraVolumeItems`;
-the trust patch owns the CR's volume list and would otherwise replace them.
+A site that needs more CA ConfigMaps lists the complete set in
+`apps/rhoai/values-<cluster>.yaml` under
+`dependencies.rhcl.config.authorinoTrustedCA.configMaps`. The chart patches only
+its named Authorino volume and leaves other Deployment volumes intact.
 
 ## Prerequisites
 

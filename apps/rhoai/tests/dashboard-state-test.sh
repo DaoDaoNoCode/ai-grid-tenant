@@ -16,23 +16,21 @@ import yaml
 with open(sys.argv[1]) as stream:
     appset = yaml.safe_load(stream)
 sources = [source for source in appset["spec"]["template"]["spec"]["sources"]
-           if source.get("path") == "charts/rhai-on-openshift-chart"]
+           if source.get("repoURL") == "oci://ghcr.io/opendatahub-io/odh-gitops/rhai-on-openshift-chart"]
 assert len(sources) == 1, "expected exactly one RHOAI chart source"
 source = sources[0]
-print(source["repoURL"], source["targetRevision"], source["path"])
+assert source.get("path") == ".", "expected the RHOAI OCI chart root path"
+print(source["repoURL"], source["targetRevision"])
 PY
-read -r repo rev path < "$T/source"
+read -r repo rev < "$T/source"
 if [ -n "${RHAI_CHART_DIR:-}" ]; then
   CHART=$RHAI_CHART_DIR
 else
-  git clone -q --depth 1 "$repo" "$T/odh-gitops"
-  git -C "$T/odh-gitops" fetch -q --depth 1 origin "$rev"
-  git -C "$T/odh-gitops" checkout -q FETCH_HEAD
-  CHART=$T/odh-gitops/$path
+  helm pull "${repo}" --version "$rev" --destination "$T/odh-gitops" --untar
+  CHART=$T/odh-gitops/rhai-on-openshift-chart
 fi
 [ -f "$CHART/Chart.yaml" ] || { echo "chart not found at $CHART" >&2; exit 1; }
-chart_sha=$(git -C "$CHART" rev-parse HEAD)
-printf 'RHOAI chart revision: %s (ApplicationSet target: %s)\n' "$chart_sha" "$rev"
+printf 'RHOAI chart version: %s\n' "$rev"
 
 mkdir -p "$T/undeclared/roles"
 for file in "$HERE/../values.yaml" "$HERE"/../roles/*.yaml; do
@@ -59,7 +57,8 @@ done
 render() {
   helm template rhai-on-openshift "$CHART" -f "$1" -f "$2" \
     --set skipCrdCheck=true --set grid-enrollment.enabled=false \
-    --set praxis-gateway.grid.siteName=site > "$3"
+    --set praxis-gateway.grid.siteName=site \
+    --set praxis-provider-gateway.grid.siteName=site > "$3"
 }
 states() {
   python3 - "$1" <<'PY'
