@@ -7,7 +7,7 @@ HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-kubectl kustomize "$HERE/.." > "$TMP_DIR/rendered.yaml"
+kubectl kustomize "$HERE/../base" > "$TMP_DIR/rendered.yaml"
 
 python3 - "$TMP_DIR/rendered.yaml" "$TMP_DIR" <<'PY'
 import sys
