@@ -76,9 +76,13 @@ spec:
         spec:
           remediationAction: enforce
           severity: high
+          # The AITenant's tenant namespace (its status.tenantNamespace, where
+          # rhoai-maastenantconfig puts the MaasTenantConfig), not the AITenant's
+          # own namespace: ai-gateway-controller reads spec.oidc.clientSecretRef
+          # there.
           namespaceSelector:
             include:
-              - ai-tenants
+              - models-as-a-service
           object-templates:
             - complianceType: musthave
               objectDefinition:
@@ -86,7 +90,7 @@ spec:
                 kind: Secret
                 metadata:
                   name: tenant-demo-oidc-client
-                  namespace: ai-tenants
+                  namespace: models-as-a-service
                 type: Opaque
                 data:
                   clientSecret: '{{hub fromSecret "maas-db" "keycloak-secrets" "KEYCLOAK_CLIENT_SECRET" hub}}'

@@ -14,10 +14,20 @@ rbac_documents = list(yaml.safe_load_all(open(sys.argv[2])))
 templates = [template["objectDefinition"] for template in policy["spec"]["policy-templates"]]
 secret_policy = next(template for template in templates
                       if template.get("metadata", {}).get("name") == "rhoai-tenant-oidc-client-secret")
-assert secret_policy["spec"]["namespaceSelector"]["include"] == ["ai-tenants"]
-secret = secret_policy["spec"]["object-templates"][0]["objectDefinition"]
-assert secret["metadata"]["namespace"] == "ai-tenants"
+# ai-gateway-controller reads spec.oidc.clientSecretRef in the AITenant's tenant
+# namespace (status.tenantNamespace): the namespace of the MaasTenantConfig that
+# rhoai-maastenantconfig creates. The Secret goes there, and only there.
+config_policy = next(template for template in templates
+                     if template.get("metadata", {}).get("name") == "rhoai-maastenantconfig")
+config = next(t["objectDefinition"] for t in config_policy["spec"]["object-templates"]
+              if t["objectDefinition"].get("kind") == "MaasTenantConfig")
+tenant_namespace = config["metadata"]["namespace"]
+secrets = [t["objectDefinition"] for t in secret_policy["spec"]["object-templates"]]
+assert [s["metadata"]["namespace"] for s in secrets] == [tenant_namespace], secrets
+assert secret_policy["spec"]["namespaceSelector"]["include"] == [tenant_namespace]
+secret = secrets[0]
 assert secret["metadata"]["name"] == "tenant-demo-oidc-client"
+assert set(secret["data"]) == {"clientSecret"}
 
 tenant_policy = next(template for template in templates
                       if template.get("metadata", {}).get("name") == "rhoai-aitenant")
