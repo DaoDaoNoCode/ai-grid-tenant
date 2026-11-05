@@ -2,10 +2,8 @@
 # cluster's own Prometheus already records them; this asks the multicluster-observability addon
 # to federate them to the hub's Thanos, next to the default platform-metrics ScrapeConfig.
 #   accelerator_gpu_utilization: the NVIDIA GPU Operator's recording rule over the DCGM exporter
-#     (PrometheusRule nvidia-dcgm-exporter in nvidia-gpu-operator); the cluster dashboard's GPU
-#     utilization panels.
-#   node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate: OpenShift's
-#     platform recording rule; the model dashboard's Model deployments table (CPU).
+#     (PrometheusRule nvidia-dcgm-exporter in nvidia-gpu-operator); the GPU utilization panels of
+#     the cluster dashboard and the GPU column of the model dashboard's Model deployments table.
 # The addon applies a ScrapeConfig only once it is listed in its ClusterManagementAddOn:
 # rhoai-prerequisites/hub/13-rhai-metrics-addon-policy.yaml registers this one.
 apiVersion: monitoring.rhobs/v1alpha1
@@ -22,4 +20,8 @@ spec:
   params:
     match[]:
       - '{__name__="accelerator_gpu_utilization"}'
-      - '{__name__="node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate"}'
+  # The same labels ACM's own platform-metrics ScrapeConfig drops, so these series carry the same
+  # labels as the default platform series next to them.
+  metricRelabelings:
+    - action: labeldrop
+      regex: managed_cluster|id

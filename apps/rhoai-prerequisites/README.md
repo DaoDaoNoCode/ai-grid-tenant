@@ -14,7 +14,7 @@ in the reserved `global` ACM cluster set:
 - the Limitador Redis configuration, on remote ingress and combined sites only, that shares MaaS rate-limit
   counters through the Submariner service import.
 - the hub-only addon registration of `rhai-metrics` and of `ai-grid-dashboard-platform-metrics`
-  (the platform metrics the AI Grid dashboards need beyond ACM's default list) and, on enabled grid sites,
+  (the GPU metric the AI Grid dashboards need beyond ACM's default list) and, on enabled grid sites,
   the NetworkPolicy admitting the local ACM agents to each RHOAI collector's
   HTTPS exporter on port 8889. It retries until RHOAI creates its monitoring
   namespace and replaces the hub-only policy in `ai-grid-o11y`; the initial

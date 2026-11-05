@@ -1,4 +1,4 @@
-# Register the existing RHOAI exporter job, and the platform metrics the AI Grid dashboards need
+# Register the existing RHOAI exporter job, and the GPU metric the AI Grid dashboards need
 # beyond ACM's default list (ai-grid-o11y/manifests/scrapeconfig-dashboard-platform-metrics.yaml),
 # without taking ownership of the addon's other configs.
 # Removing this musthave policy does not withdraw the tuple; deregistration is a separate migration.
