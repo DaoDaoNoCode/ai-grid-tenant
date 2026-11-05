@@ -28,14 +28,15 @@ To install only the core realm, set the keycloak Application source path to
 For a cluster without Argo CD, run:
 
 ```sh
-apps/keycloak/install.sh --namespace grid-sso
+apps/keycloak/install.sh
 ```
 
 Use `--render` to print the manifests without applying them. The script uses
-the examples profile and creates the namespace. It reads the Route host assigned
-by OpenShift and creates the `keycloak-public-url` ConfigMap. It does not install
-or use Argo CD or ACM. It still requires the CloudNativePG cluster, External
-Secrets, and cert-manager to be installed.
+the default profile and installs in the `maas-db` namespace. It reads the Route
+host assigned by OpenShift and creates the `keycloak-public-url` ConfigMap. It
+does not install or use Argo CD or ACM. It still requires the CloudNativePG
+cluster, External Secrets, and cert-manager to be installed.
+The direct installer creates namespace `maas-db` when it does not exist.
 
 ## Topology
 
@@ -46,8 +47,8 @@ Secrets, and cert-manager to be installed.
   and database without sharing credentials with the API database user.
 - Keycloak connects to `maas-db-rw` with TLS and verifies the server against
   the existing `maas-db-ca` Secret.
-- The default install imports only the core `saas` broker realm on first
-  startup. The example realms are opt-in. See Install profiles.
+- The default install imports the example realms and the core `saas` broker
+  realm when they do not exist. The `core` overlay excludes the examples.
 - The upstream example `AITenant` resource is intentionally not applied by this
   app; the tenant-facing application should own its consumer configuration.
 

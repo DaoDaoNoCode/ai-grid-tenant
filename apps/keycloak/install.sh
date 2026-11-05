@@ -4,30 +4,25 @@ set -Eeuo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/keycloak/install.sh [--namespace NAME] [--render]
+  apps/keycloak/install.sh [--render]
 
 Options:
-  --namespace NAME  Install Keycloak in NAME. Default: grid-sso.
   --render          Print the rendered manifests and do not apply them.
 
-The script uses the direct examples profile. It creates the namespace, applies
-the manifests with kubectl, reads the Route host assigned by OpenShift, and
-creates the public-URL ConfigMap. It does not install or use Argo CD or ACM.
+The script uses the direct default profile. It installs in the maas-db
+namespace, applies the manifests with kubectl, reads the Route host assigned
+by OpenShift, and creates the public-URL ConfigMap. It does not install or
+use Argo CD or ACM.
 It still requires the CloudNativePG, External Secrets, and cert-manager CRDs
 and controllers.
 EOF
 }
 
-namespace="grid-sso"
+namespace="maas-db"
 render=false
 
 while (($# > 0)); do
   case "$1" in
-    --namespace)
-      (($# >= 2)) || { usage >&2; exit 2; }
-      namespace="$2"
-      shift 2
-      ;;
     --render)
       render=true
       shift
@@ -68,8 +63,7 @@ fi
 kubectl create namespace "$namespace" --dry-run=client -o yaml |
   kubectl apply -f -
 
-kubectl kustomize --load-restrictor=LoadRestrictionsNone "$tmpdir" |
-  kubectl apply -f -
+kubectl apply -f "$script_dir/base/manifests/route.yaml"
 
 kubectl wait --for=jsonpath='{.status.ingress[0].host}' route/keycloak \
   -n "$namespace" --timeout=120s
@@ -83,6 +77,9 @@ route_host="$(
 kubectl create configmap keycloak-public-url \
   --from-literal="KEYCLOAK_PUBLIC_URL=https://$route_host" \
   -n "$namespace" --dry-run=client -o yaml |
+  kubectl apply -f -
+
+kubectl kustomize --load-restrictor=LoadRestrictionsNone "$tmpdir" |
   kubectl apply -f -
 
 kubectl rollout status deployment/keycloak -n "$namespace" --timeout=300s
