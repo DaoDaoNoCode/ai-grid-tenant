@@ -168,7 +168,14 @@ directories, and the Keycloak container imports each before `kc.sh start`:
   `grid-tenant-1-idp` and `grid-tenant-2-idp` example tenant IdPs, defined
   wholly in Git. `kc.sh import --override true` deletes and rebuilds them on
   every start, so an edit to their files takes effect on the next restart and
-  anything created in them at runtime is lost. The `core` overlay has none.
+  anything created in them at runtime is lost. Each of their users has a fixed
+  `id` in the file: it is the `sub` that `saas` links a brokered user to, so a
+  rebuild must not change it. The `core` overlay has none.
+
+The Deployment uses the `Recreate` strategy: the old pod stops before the new
+one imports, so no pod serves a realm while an overwrite import deletes and
+re-creates it in the shared database. A rollout has a few seconds without
+Keycloak.
 
 An edit to `saas-realm.json` reaches an existing realm through two Argo CD
 PostSync hooks, which run in sync-wave order after every sync of this
@@ -192,6 +199,8 @@ Keycloak Deployment is healthy:
 | Clients, identity providers, identity provider mappers, users, groups and roles the realm lacks | Adds them with a partial import (`ifResourceExists: SKIP`). |
 | Clients the realm has | Updates each in place, on top of the live client: same id, so its sessions stay. Its protocol mappers become the file's, so a mapper removed from the file is deleted; client scopes the file lists are added. The `tenant-demo` client's redirect URIs stay as the CronJob set them. |
 | Identity providers and identity provider mappers the realm has | Updates each in place: same id, so organization links and brokered users' links stay. Config keys the file doesn't set stay. |
+| Identity provider mappers | Deletes the mappers of the file's identity providers that the file doesn't have. Identity providers the file doesn't have, such as the console's organizations', keep all of theirs. |
+| The example tenant IdP realms' users (examples component) | A brokered user whose `grid-tenant-*` link points at a user id the rebuilt realm no longer has is linked again to the file's fixed id, with the same username. The `saas` user keeps its id, organizations and sessions. This repairs the links of a realm whose tenant users predate the fixed ids, on the first sync after them. |
 | Service-account users | Grants the roles the file gives them. |
 
 A partial import with `ifResourceExists: OVERWRITE` isn't used: it deletes and
@@ -201,10 +210,11 @@ links.
 
 These are not reconciled; plan them as a change of their own:
 
-- Removals, apart from client protocol mappers. A client, identity provider,
-  identity provider mapper, user, group, role, client scope or role mapping
-  removed from the file stays in the realm; delete it through the admin console
-  or API as well.
+- Removals, apart from client protocol mappers and the file's identity
+  providers' mappers. A client, identity provider, user, group, role, client
+  scope or role mapping removed from the file stays in the realm; delete it
+  through the admin console or API as well. The sync can't tell an identity
+  provider removed from the file from one the console created.
 - Organizations, including the `grid-tenant-1` and `grid-tenant-2` examples, and
   their domains: they are created with the realm only.
 - Components: the realm's signing key provider and its user profile. A realm
@@ -241,7 +251,12 @@ stays for its logs until the next sync replaces it.
 `overlays/direct` (`install.sh`, without Argo CD) leaves both hooks out:
 `kubectl apply` would start them in no order and couldn't update them later.
 A direct install imports `saas` on the first start; apply later edits to it
-with a planned export/import or the admin API.
+with a planned export/import or the admin API. It still rebuilds the example
+tenant IdP realms on every start. On a direct install whose tenant users
+predate their fixed ids, a brokered user's first sign-in after the update finds
+its link stale ("Account already exists"): delete that user's `grid-tenant-*`
+identity provider link in `saas` (Users, the user, Identity provider links) and
+add it again with the file's user id and username.
 
 ## Validation
 

@@ -9,6 +9,11 @@ metadata:
     app.kubernetes.io/name: keycloak
 spec:
   replicas: 1
+  # The old pod stops before the new one imports: an overwrite import deletes
+  # and re-creates realms in the shared database, which a pod still serving
+  # them must not see.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: keycloak

@@ -3,11 +3,15 @@
 
 - keycloak-realm-import (saas) is imported only when the realm is missing; the
   examples component's keycloak-realm-overwrite (the tenant IdP realms) is
-  rebuilt on every start.
+  rebuilt on every start, so each of their users has a fixed id: saas links its
+  brokered users to it. The Deployment stops the old pod before the new one
+  imports (Recreate).
 - Two PostSync hooks apply saas-realm.json to an existing realm, the bootstrap
   Job before the sync Job. The bootstrap Job holds the bootstrap admin's two
   keys and the sync client's secret; the sync Job holds exactly the values the
-  saas realm file's placeholders need, and never the admin's.
+  saas realm file's placeholders need, and never the admin's. With the
+  examples, it also mounts the tenant realm files unrendered, to read the users'
+  fixed ids.
 - The direct overlay, applied with kubectl, has no hooks.
 
 Usage: realm-import-test.py OUT_DIR. For each overlay it writes, under
@@ -15,6 +19,7 @@ OUT_DIR/<overlay>, the files and scripts the containers see, which
 realm-import-test.sh runs. Needs kubectl and PyYAML.
 """
 
+import ast
 import json
 import os
 import re
@@ -148,9 +153,15 @@ def check_overlay(overlay, with_examples, with_hooks):
     assert realm_import["data"]["saas-realm.json"] == open(os.path.join(APP, saas_source)).read(), overlay
     if with_examples:
         assert set(overwrite["data"]) == {"grid-tenant-1-idp-realm.json", "grid-tenant-2-idp-realm.json"}, overlay
+        user_ids = []
         for name, content in overwrite["data"].items():
             assert content == open(os.path.join(APP, "components/examples", name)).read(), name
             assert json.loads(content)["realm"] != "saas", name
+            for user in json.loads(content).get("users", []):
+                assert re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+                                    user.get("id", "")), (name, user["username"])
+                user_ids.append(user["id"])
+        assert user_ids and len(user_ids) == len(set(user_ids)), user_ids
     else:
         assert overwrite is None, overlay
     assert set(scripts["data"]) == {"render-realm.sh", "sync-saas-realm.py"}, overlay
@@ -160,6 +171,7 @@ def check_overlay(overlay, with_examples, with_hooks):
     # The Deployment: keycloak-realm-import is rendered to create-only, the
     # examples' keycloak-realm-overwrite to overwrite.
     deployment = find(documents, "Deployment", "keycloak")
+    assert deployment["spec"]["strategy"] == {"type": "Recreate"}, overlay
     pod = deployment["spec"]["template"]["spec"]
     pod_volumes = volumes(pod)
     init = next(c for c in pod["initContainers"] if c["name"] == "render-realm-import")
@@ -256,6 +268,15 @@ def check_overlay(overlay, with_examples, with_hooks):
         assert volumes(sync_pod)["realm-import-source"]["configMap"]["name"] == realm_import["metadata"]["name"]
         assert volumes(sync_pod)["realm-scripts"]["configMap"]["name"] == scripts["metadata"]["name"]
         assert volumes(sync_pod)["work"]["emptyDir"]["medium"] == "Memory"
+        sync_mounts = mounts(sync)
+        if with_examples:
+            assert volumes(sync_pod)[sync_mounts[BROKERED_REALMS_DIR]["name"]]["configMap"]["name"] == \
+                overwrite["metadata"]["name"], overlay
+            assert set(volumes(sync_pod)) == {"realm-import-source", "realm-scripts", "work",
+                                              "realm-overwrite-source"}, overlay
+        else:
+            assert BROKERED_REALMS_DIR not in sync_mounts, overlay
+            assert set(volumes(sync_pod)) == {"realm-import-source", "realm-scripts", "work"}, overlay
         write(os.path.join(out, "job.sh"), sync_script)
         write(os.path.join(out, "sync-env"), "\n".join(sorted(sync_sources)) + "\n")
 
@@ -280,13 +301,24 @@ def check_overlay(overlay, with_examples, with_hooks):
     write(os.path.join(out, "start.sh"), script(keycloak))
 
 
+SYNC_PY = open(os.path.join(APP, "base/manifests/scripts/sync-saas-realm.py")).read()
+BROKERED_REALMS_DIR = re.search(r'^BROKERED_REALMS_DIR = "([^"]+)"$', SYNC_PY, re.MULTILINE).group(1)
+
 check_overlay("core", with_examples=False, with_hooks=True)
 check_overlay("default", with_examples=True, with_hooks=True)
 check_overlay("direct", with_examples=True, with_hooks=False)
 
-# The sync script deletes nothing and never overwrites by re-creation.
-sync_py = open(os.path.join(APP, "base/manifests/scripts/sync-saas-realm.py")).read()
-assert '"ifResourceExists"] = "SKIP"' in sync_py
-assert "OVERWRITE" not in sync_py
-assert '"DELETE"' not in sync_py
+# The sync script never overwrites by re-creation, and deletes only the
+# mappers of the file's identity providers that the file dropped and a brokered
+# user's stale link, which it adds again.
+assert '"ifResourceExists"] = "SKIP"' in SYNC_PY
+assert "OVERWRITE" not in SYNC_PY
+deleting = set()
+for function in ast.parse(SYNC_PY).body:
+    if isinstance(function, ast.FunctionDef):
+        for node in ast.walk(function):
+            if isinstance(node, ast.Call) and node.args and isinstance(node.args[0], ast.Constant) \
+                    and node.args[0].value == "DELETE":
+                deleting.add(function.name)
+assert deleting == {"delete_dropped_identity_provider_mappers", "relink_brokered_users"}, deleting
 print("keycloak realm import render checks: ok")

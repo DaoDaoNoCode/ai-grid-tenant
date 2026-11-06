@@ -32,7 +32,15 @@ sync-saas-realm.py sync RENDERED_REALM_FILE
       client's protocol mappers become the file's. The redirect URIs of the
       KEYCLOAK_CLIENT_ID client stay as they are: the keycloak-redirect-uris
       CronJob owns them;
-    - the file's service-account users get the roles it gives them.
+    - the file's identity providers lose the mappers the file doesn't give them.
+      Identity providers the file doesn't have (the console's organizations')
+      aren't touched, and nor are clients, identity providers or users that
+      were removed from the file: they stay until someone deletes them;
+    - the file's service-account users get the roles it gives them;
+    - a brokered user linked to a user of a realm in BROKERED_REALMS_DIR (the
+      example tenant realms, which Keycloak rebuilds on every start) by a user
+      id that realm no longer has is linked again to the file's fixed id, so the
+      user keeps signing in through it as the same saas user.
     Environment: KEYCLOAK_URL, KEYCLOAK_CLIENT_ID and
     KEYCLOAK_REALM_SYNC_CLIENT_SECRET.
 
@@ -52,6 +60,10 @@ SYNC_CLIENT = "keycloak-realm-sync"
 SYNC_CLIENT_SECRET_PLACEHOLDER = "${KEYCLOAK_REALM_SYNC_CLIENT_SECRET}"
 NOT_SETTINGS = {"id", "realm", "keycloakVersion"}
 PARTIAL_IMPORT_KEYS = ("clients", "identityProviders", "identityProviderMappers", "users", "groups", "roles")
+# The realm files Keycloak imports with --override true on every start, when the
+# Job mounts them (the examples component does).
+BROKERED_REALMS_DIR = "/opt/keycloak/realm-overwrite-source"
+PAGE = 100
 
 
 class Failure(Exception):
@@ -230,6 +242,70 @@ def update_identity_provider_mappers(admin, realm):
         print("identity provider mapper %s updated" % wanted["name"])
 
 
+def delete_dropped_identity_provider_mappers(admin, realm):
+    """Deletes the mappers of the file's identity providers that the file doesn't have."""
+    for provider in realm.get("identityProviders", []):
+        alias = provider["alias"]
+        wanted = {m["name"] for m in realm.get("identityProviderMappers", []) if m["identityProviderAlias"] == alias}
+        path = "/identity-provider/instances/%s/mappers" % quote(alias)
+        for live in admin.call("GET", path):
+            if live["name"] not in wanted:
+                admin.call("DELETE", "%s/%s" % (path, live["id"]))
+                print("identity provider mapper %s deleted: the file no longer has it" % live["name"])
+
+
+def brokered_realm_user_ids(directory):
+    """{realm: {username: id}} of the realm files in directory; {} when it isn't mounted."""
+    ids = {}
+    if not os.path.isdir(directory):
+        return ids
+    for name in sorted(os.listdir(directory)):
+        if not name.endswith(".json"):
+            continue
+        with open(os.path.join(directory, name)) as stream:
+            brokered = json.load(stream)
+        users = {}
+        for user in brokered.get("users", []):
+            if not user.get("id"):
+                raise Failure("%s: user %s has no fixed id, so every start would give it a new one"
+                              % (name, user.get("username")))
+            users[user["username"]] = user["id"]
+        ids[brokered["realm"]] = users
+    return ids
+
+
+def relink_brokered_users(admin, realm, user_ids):
+    """Points brokered users' links into a rebuilt realm at the ids its file fixes."""
+    for provider in realm.get("identityProviders", []):
+        issuer = (provider.get("config") or {}).get("issuer", "").rstrip("/")
+        if "/realms/" not in issuer:
+            continue
+        ids = user_ids.get(issuer.rsplit("/realms/", 1)[1])
+        if not ids:
+            continue
+        alias = provider["alias"]
+        relinked = []
+        first = 0
+        while True:
+            page = admin.call("GET", "/users?briefRepresentation=true&idpAlias=%s&first=%d&max=%d"
+                              % (quote(alias), first, PAGE))
+            for user in page:
+                for link in admin.call("GET", "/users/%s/federated-identity" % user["id"]):
+                    wanted = ids.get(link.get("userName"))
+                    if link.get("identityProvider") != alias or not wanted or link.get("userId") == wanted:
+                        continue
+                    path = "/users/%s/federated-identity/%s" % (user["id"], quote(alias))
+                    admin.call("DELETE", path)
+                    admin.call("POST", path, {"identityProvider": alias, "userId": wanted,
+                                              "userName": link["userName"]})
+                    relinked.append(link["userName"])
+            if len(page) < PAGE:
+                break
+            first += PAGE
+        print("identity provider %s: %s" % (alias, ("relinked " + ", ".join(sorted(relinked))) if relinked
+                                             else "brokered users' links in place"))
+
+
 def role_mappings(admin, user):
     """The service account of user, and (roles path, mapping path, wanted role names) for each of its role sets."""
     account = admin.call("GET", "/clients/%s/service-account-user" % admin.client(user["serviceAccountClientId"])["id"])
@@ -321,6 +397,7 @@ def sync(path):
         realm = json.load(stream)
     if realm.get("realm") != REALM:
         raise Failure("%s is not the %s realm" % (path, REALM))
+    user_ids = brokered_realm_user_ids(BROKERED_REALMS_DIR)
     wait_for_keycloak()
     access_token, status, message = sync_client_token()
     if not access_token:
@@ -333,8 +410,10 @@ def sync(path):
     update_clients(admin, realm, redirect_uris_owned_elsewhere=os.environ["KEYCLOAK_CLIENT_ID"])
     update_identity_providers(admin, realm)
     update_identity_provider_mappers(admin, realm)
+    delete_dropped_identity_provider_mappers(admin, realm)
     grant_service_account_roles(admin, realm)
-    print("realm %s is in sync with its file" % REALM)
+    relink_brokered_users(admin, realm, user_ids)
+    print("realm %s: the file's resources are applied" % REALM)
 
 
 def main(argv):
