@@ -1,3 +1,4 @@
+{{- if ne (.Values.role | default "") "inference" }}
 {{- $gateway := .Values.components.aigateway.modelsAsAService.gateway }}
 {{- $hostnamePrefix := index $gateway.annotations "ai-grid/maas-gateway-hostname-prefix" }}
 {{- if not $hostnamePrefix }}{{ fail "components.aigateway.modelsAsAService.gateway.annotations.ai-grid/maas-gateway-hostname-prefix is required" }}{{ end }}
@@ -25,3 +26,4 @@ spec:
               hostname: '{{ $hostnamePrefix }}.{{ "{{" }} (lookup "config.openshift.io/v1" "Ingress" "" "cluster").spec.domain {{ "}}" }}'
             - name: https
               hostname: '{{ $hostnamePrefix }}.{{ "{{" }} (lookup "config.openshift.io/v1" "Ingress" "" "cluster").spec.domain {{ "}}" }}'
+{{- end }}
