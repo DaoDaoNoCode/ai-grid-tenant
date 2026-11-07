@@ -324,7 +324,7 @@ spec:
           object-templates-raw: |
             {{- $sourceSecret := lookup "v1" "Secret" "openshift-marketplace" "rhoai-catalog-pull-secret" -}}
             {{- $infra := lookup "config.openshift.io/v1" "Infrastructure" "" "cluster" -}}
-            {{- $hcp := eq $infra.status.controlPlaneTopology "External" -}}
+            {{- $hcp := eq (dig "status" "controlPlaneTopology" "" ($infra | default dict)) "External" -}}
             {{- $targetNamespace := "openshift-config" -}}
             {{- $targetName := "pull-secret" -}}
             {{- if $hcp -}}

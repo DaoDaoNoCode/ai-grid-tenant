@@ -55,11 +55,20 @@ existing = {'auths': {'quay.io': {'auth': 'synthetic-broad'},
             'HttpHeaders': {'X-Test': 'preserved'}}
 
 
-def render(topology, target=None, input_config=source, empty_input=False):
+def render(topology, target=None, input_config=source, empty_input=False, infra_fixture="default"):
     objects = {'config.openshift.io/v1|Infrastructure||cluster':
                {'status': {'controlPlaneTopology': topology}},
                'v1|Secret|kube-system|original-pull-secret': secret(original),
                'v1|Secret|kube-system|global-pull-secret': secret(original)}
+    infra_key = 'config.openshift.io/v1|Infrastructure||cluster'
+    if infra_fixture == 'missing':
+        objects.pop(infra_key)
+    elif infra_fixture == 'no-status':
+        objects[infra_key] = {}
+    elif infra_fixture == 'empty-status':
+        objects[infra_key] = {'status': {}}
+    elif infra_fixture == 'no-topology':
+        objects[infra_key] = {'status': {'platformStatus': {}}}
     # Deliberately supply a different guest global Secret on HCP: it must not be copied.
     if topology == 'External':
         objects[normal_key] = secret(original)
@@ -115,3 +124,9 @@ assert render('External', input_config=scoped)[1] == {'auths': {'quay.io/rhoai':
 print('PASS: HCP creates/merges only additional credentials, preserving unrelated entries')
 print('PASS: scoped Quay wins over broad source; no original/generated Secret writes or source aliases')
 print('Fixture rendering only; live HCCO merge, worker delivery and image pulls remain unverified.')
+
+for infra_fixture in ['missing', 'no-status', 'empty-status', 'no-topology']:
+    result = render('HighlyAvailable', existing, infra_fixture=infra_fixture)
+    assert result == ({'name': 'pull-secret', 'namespace': 'openshift-config'}, expected)
+    assert render('HighlyAvailable', infra_fixture=infra_fixture) is None
+    print('PASS: infrastructure lookup fixture', infra_fixture)
