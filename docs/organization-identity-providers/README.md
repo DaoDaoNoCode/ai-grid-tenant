@@ -6,11 +6,16 @@ An organization's users sign in to the MaaS portal with their own identity provi
 - [Google](google.md): testing only, it can't send groups or roles.
 
 ```mermaid
-flowchart LR
-    U[User] -->|1. email| KC[Keycloak realm saas]
-    KC -->|2. email domain matches| IDP[Organization's identity provider]
-    IDP -->|3. ID token: sub, email, groups, roles| KC
-    KC -->|4. token: org_id, org_name, groups, roles| P[MaaS portal and MaaS API]
+sequenceDiagram
+    actor User
+    participant KC as Keycloak (realm saas)
+    participant IdP as Organization's identity provider
+    participant MaaS as MaaS portal and API
+    User->>KC: 1. Enter an email, such as jane@acme.com
+    KC->>User: 2. acme.com belongs to acme: redirect to its identity provider
+    User->>IdP: 3. Sign in
+    IdP->>KC: 4. ID token: sub, email, groups, roles
+    KC->>MaaS: 5. Token: org_id, org_name, groups, roles
 ```
 
 ## What the identity provider must send
