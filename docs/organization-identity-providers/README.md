@@ -2,8 +2,7 @@
 
 An organization's users sign in to the MaaS portal with their own identity provider: the organization's Microsoft Entra ID, Okta, Keycloak or similar. The provider admin connects it once, in the provider console. Keycloak (realm `saas` on the hub) brokers the sign-in; AI Grid never manages the organization's users.
 
-- [Microsoft Entra ID](entra-id.md)
-- [Google](google.md): testing only, it can't send groups or roles.
+[Microsoft Entra ID](entra-id.md) is the worked example: its page fills in Entra's side of the steps below.
 
 ```mermaid
 sequenceDiagram
@@ -41,7 +40,7 @@ Keycloak copies `groups` and `roles` at every sign-in through the identity provi
 
 ## Connect an identity provider in the provider console
 
-Do these steps for every organization. Each identity provider's page gives its own values.
+Do these steps for every organization. [Microsoft Entra ID](entra-id.md) gives Entra's values; for another identity provider, take them from its own documentation.
 
 ### 1. Choose the organization's name
 
@@ -123,7 +122,7 @@ The identity provider's settings can't be changed in the console afterwards, and
 
 Open the MaaS portal on an ingress cluster, `https://maas.<cluster-apps-domain>/maas-portal`, and enter an email with one of the organization's domains (1): Keycloak sends the user straight to the identity provider. At the first sign-in, a user whose email domain is one of the organization's domains joins the organization as a managed member.
 
-![Keycloak's sign-in page asking for Username or email, the field marked 1](images/11-keycloak-login-email.png)
+![Keycloak's sign-in page asking for Username or email, the field marked 1](images/10-keycloak-login-email.png)
 
 To check what a user got, in Keycloak's admin console (realm `saas`): **Users**, the user, **Attributes**. `maas_org_name` (1), `maas_org_id` (2), `maas_groups` (3) and `maas_roles` (4) become the token's `org_name`, `org_id`, `groups` and `roles`.
 
@@ -137,7 +136,7 @@ In the provider console, create a subscription for the organization with the gro
 
 | What you see | Why, and what to do |
 | --- | --- |
-| The identity provider shows `redirect_uri_mismatch` (Google) or `AADSTS50011` (Entra) | The redirect URI isn't registered exactly as in step 1: `https`, the organization's name, no trailing slash. |
+| The identity provider rejects the redirect URI, for example Entra's `AADSTS50011` | The redirect URI isn't registered exactly as in step 1: `https`, the organization's name, no trailing slash. |
 | Keycloak shows "We are sorry…" after the identity provider's sign-in | Keycloak couldn't get the token, most often a wrong client secret, such as one with a trailing newline. Keycloak's log has `IDENTITY_PROVIDER_LOGIN_ERROR`. Fix the secret in Keycloak ([step 4](#4-create-the-organization)). |
 | Create organization fails with `identity provider secret "<name>" not found` | The Secret isn't in `ai-grid-idp-secrets`, or has another name. Create it and retry: nothing was left behind. |
 | Create organization fails with `tenant "<name>" already exists` | The name, or one of the domains, is already used by another organization. |
