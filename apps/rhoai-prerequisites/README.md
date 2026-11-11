@@ -177,14 +177,14 @@ kubectl --context "$SPOKE_CONTEXT" -n rhoai-prerequisites \
 Conventional control planes retain named `quay-registry` enforcement with
 `NeverContactSource`. The ROSA CLI does not expose an equivalent fallback-policy
 setting, so the HCP check does not require `mirrorSourcePolicy` or claim the
-same source-fallback behavior. Mirror pruning is disabled for both topologies
-so policy removal and topology transitions retain service- and administrator-owned
-mirror resources; removing obsolete mappings requires a deliberate ownership review.
+same source-fallback behavior. The policy retains `pruneObjectBehavior: DeleteAll`
+to preserve existing conventional-cluster cleanup behavior. Live pruning of matched
+unnamed HCP resources and named-to-unnamed transitions remains to be verified.
 
-Mirror configuration does not deliver registry credentials to HCP workers.
-The separate HCP worker pull-secret integration is tracked in
-[RHAI-18763](https://redhat.atlassian.net/browse/RHAI-18763); a Compliant mirror
-policy alone does not establish that mirrored image pulls succeed.
+Worker credentials come from the
+[HCP pull-secret path above](#worker-credentials-on-hosted-control-planes),
+implemented in PR #230 for [RHAI-18763](https://redhat.atlassian.net/browse/RHAI-18763).
+A Compliant mirror policy alone does not establish that mirrored image pulls succeed.
 
 Run the local rendering checks with Helm and PyYAML:
 

@@ -262,11 +262,10 @@ spec:
         spec:
           remediationAction: enforce
           severity: low
-          # Preserve mirrors owned by the service or an administrator.
-          pruneObjectBehavior: None
+          pruneObjectBehavior: DeleteAll
           object-templates-raw: |
             {{- $infra := lookup "config.openshift.io/v1" "Infrastructure" "" "cluster" -}}
-            {{- $hcp := eq $infra.status.controlPlaneTopology "External" -}}
+            {{- $hcp := eq (dig "status" "controlPlaneTopology" "" ($infra | default dict)) "External" -}}
             # HCP: unnamed templates are evaluated in inform mode by ACM.
             # Require the mappings without writing a service-managed resource.
             - complianceType: musthave
