@@ -18,14 +18,6 @@ operator:
       channel: stable-3.6
       # ACM owns this Red Hat managed Namespace; OSD rejects Argo writes to it.
       createNamespace: false
-      # NOTE(ckyrillo): testing a fix - to be reverted after https://github.com/opendatahub-io/odh-observability/pull/163 is merged
-      # These land as env on the rhods-operator Subscription, so the operator
-      # passes the test builds through to the odh-observability it deploys.
-      config:
-        env:
-          - name: RELATED_IMAGE_ODH_OBSERVABILITY_IMAGE
-            value: quay.io/ckyrillo/odh-observability:rhai-23199
-
 dependencies:
   opentelemetry:
     olm:

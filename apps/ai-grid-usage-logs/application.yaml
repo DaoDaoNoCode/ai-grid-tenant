@@ -35,9 +35,8 @@ spec:
     # predates this subchart and carries 5 of its 15 files -- no
     # store/lokistack.yaml, no store/object-storage.yaml, no values.schema.json
     # -- so it cannot render the store at all. Retarget once it catches up.
-    # NOTE(ckyrillo): testing a fix - to be reverted after https://github.com/opendatahub-io/odh-gitops/pull/284 lands.
-    - repoURL: https://github.com/carlkyrillos/odh-gitops.git
-      targetRevision: add-cert-for-loki-write
+    - repoURL: https://github.com/opendatahub-io/odh-gitops.git
+      targetRevision: main
       path: charts/rhai-on-openshift-chart/charts/ai-grid-o11y-hub
       helm:
         releaseName: ai-grid-usage-logs
