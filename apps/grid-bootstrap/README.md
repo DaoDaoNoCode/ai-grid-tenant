@@ -38,9 +38,9 @@ so the operator's own GridSite for it carries no endpoints, and peers admit its
 calls without dialing or polling it.
 
 The enrollment policy is the only source of each member's GridNetwork. The
-operator's config-read RBAC comes from `policies/operator-config-rbac.yaml` until
-the platform's Grid manifests carry it. No enrollment service runs: the RHOAI
-release keeps grid-enrollment disabled.
+operator's read access to its ConfigMap comes from the AI gateway operator's own
+manifests. No enrollment service runs: the RHOAI release keeps grid-enrollment
+disabled.
 
 ## Verify the rollout
 
