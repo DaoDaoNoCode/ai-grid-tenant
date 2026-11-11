@@ -8,6 +8,8 @@ metadata:
 spec:
   externalProviderRefs:
     - apiFormat: openai-chat
+      # MaaS sends every request for this model to this path. facebook/opt-125m is a base
+      # model without a chat template, so it answers text completions only.
       path: /v1/completions
       ref:
         name: grid-provider
@@ -20,6 +22,9 @@ kind: MaaSModelRef
 metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "4"
+    # Tells the MaaS Portal to show a /v1/completions example and keep the model out of
+    # the chat playground. Keep it in line with the ExternalModel's path above.
+    opendatahub.io/model-capabilities: '["Text completion"]'
   name: facebook-opt-125m
   namespace: models-as-a-service
 spec:
