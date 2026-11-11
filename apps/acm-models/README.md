@@ -79,8 +79,9 @@ One Application owns each object. To hand a sample model to the catalog:
 4. Check that the catalog's Applications are Synced, the console reports the model published, and a tenant's
    authenticated request reaches it.
 
-MaaS has no entry for the model between steps 2 and 3. smollm2-135m-instruct moved this way; the tenant
-subscriptions in `maas/policies/` still name it and grant access to the catalog's copy.
+MaaS has no entry for the model between steps 2 and 3, and a subscription that names it reports the
+reference unavailable until the catalog's copy exists. smollm2-135m-instruct moved this way; the tenant
+subscriptions in `maas/policies/` no longer name it.
 
 Deletion differs by design. Deleting the models ApplicationSet, or a cluster's folder, leaves its models running
 (`preserveResourcesOnDeletion`). Deleting an ingress or subscriptions Application deletes its MaaS objects with
