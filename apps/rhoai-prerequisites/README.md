@@ -1,7 +1,8 @@
 # RHOAI prerequisites
 
-This app distributes the RHOAI installation prerequisites to every cluster
-in the reserved `global` ACM cluster set:
+This app distributes the RHOAI installation prerequisites to the AI Grid members,
+the clusters labelled `ai-grid/enabled=true`, and to the hub, which pulls the
+grid-bootstrap image from the same registry. Other managed clusters get nothing:
 
 - the protected `redhat-ai-grid` and `redhat-ods-operator` Namespaces;
 - the same `ImageDigestMirrorSet` used by the hub;
@@ -39,9 +40,9 @@ still distributed because it does not contain credentials.
 ## Clean-cluster flow
 
 `bootstrap.sh` seeds only the hub-side credential Secret. The root
-ApplicationSet then discovers this app, ACM applies the prerequisites to every
-cluster in the `global` cluster set, and the RHOAI ApplicationSet deploys after
-them. No per-cluster `rosa`, `ocm`, or pull-secret command is required when a
+ApplicationSet then discovers this app, ACM applies the prerequisites to the hub and
+to each cluster as it gains the `ai-grid/enabled` label, and the RHOAI ApplicationSet
+deploys after them. No per-cluster `rosa`, `ocm`, or pull-secret command is required when a
 managed cluster joins.
 
 The global pull-secret policy is idempotent. It reads the current
