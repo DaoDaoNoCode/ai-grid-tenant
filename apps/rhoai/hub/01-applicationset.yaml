@@ -118,8 +118,12 @@ spec:
           path: apps/rhoai/gateway-hostname
           helm:
             releaseName: rhoai-gateway-hostname
+            # The same files as the RHOAI chart, so this policy sees the site's exposure mode.
+            ignoreMissingValueFiles: true
             valueFiles:
               - $values/apps/rhoai/values.yaml
+              - '$values/apps/rhoai/roles/{{ index .metadata.labels "ai-grid/role" }}.yaml'
+              - $values/apps/rhoai/values-{{ .name }}.yaml
             parameters:
               - name: clusterNamespace
                 value: '{{ .name }}'
