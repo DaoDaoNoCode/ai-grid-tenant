@@ -13,6 +13,12 @@ spec:
         memory: 2Gi
       limits:
         memory: 8Gi
+  # Appended to the operator's default policy, which already grants Argo admin
+  # to the OCM-managed `cluster-admins` Group; this adds the Git-managed
+  # `ai-grid-admins` Group without touching `policy.default`.
+  rbac:
+    policy.csv: |
+      g, ai-grid-admins, role:admin
   # Statusless declarative resources such as ACM PlacementBinding and MetalLB
   # address pools rely on Argo's sync state; scripts/check-gitops-health-checks.sh
   # documents that exception when a new custom resource is added.
