@@ -234,6 +234,9 @@ def update_user_profile(admin, realm):
     print("user profile configuration updated")
 
 
+PROFILE_USERNAME_MAPPER_TYPE = "oidc-usermodel-attribute-mapper"
+
+
 def update_profile_username_mapper(admin):
     scopes = [scope for scope in admin.call("GET", "/client-scopes") if scope.get("name") == "profile"]
     if len(scopes) != 1:
@@ -248,9 +251,14 @@ def update_profile_username_mapper(admin):
         raise Failure("profile client scope must have one preferred_username mapper named username")
     mapper = dict(matches[0])
     config = dict(mapper.get("config") or {})
-    if config.get("user.attribute") == "maas_preferred_username":
+    # The built-in mapper is an oidc-usermodel-property-mapper, which reads only
+    # the user's built-in properties: pointed at a custom attribute, it emits no
+    # preferred_username at all. The attribute mapper reads user attributes.
+    if (mapper.get("protocolMapper") == PROFILE_USERNAME_MAPPER_TYPE and
+            config.get("user.attribute") == "maas_preferred_username"):
         print("profile username mapper in place")
         return
+    mapper["protocolMapper"] = PROFILE_USERNAME_MAPPER_TYPE
     config["user.attribute"] = "maas_preferred_username"
     mapper["config"] = config
     admin.call("PUT", "%s/%s" % (path, mapper["id"]), mapper)

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Render the Keycloak overlays and check the identity contract."""
 
+import importlib.util
 import json
 import os
 import subprocess
+import sys
 
 import yaml
 
@@ -178,7 +180,48 @@ def check_maas_policy():
     }
 
 
+def check_profile_username_mapper_sync():
+    """Realm sync makes the profile scope's username mapper read the attribute."""
+    path = os.path.join(APP, "base/manifests/scripts/sync-saas-realm.py")
+    spec = importlib.util.spec_from_file_location("sync_saas_realm", path)
+    sync = importlib.util.module_from_spec(spec)
+    # No __pycache__ next to the script, which is shipped in a ConfigMap.
+    sys.dont_write_bytecode = True
+    spec.loader.exec_module(sync)
+
+    class Admin:
+        def __init__(self, mapper):
+            self.mapper = mapper
+            self.puts = []
+
+        def call(self, method, path, body=None):
+            if method == "GET" and path == "/client-scopes":
+                return [{"id": "profile-id", "name": "profile"}]
+            if method == "GET":
+                return [self.mapper]
+            self.puts.append((path, body))
+
+    built_in = {"id": "m1", "name": "username", "protocolMapper": "oidc-usermodel-property-mapper",
+                "config": {"claim.name": "preferred_username", "user.attribute": "username"}}
+    # Pointed at the attribute but still the property mapper, as a realm synced
+    # before this check has it.
+    half_done = dict(built_in, config=dict(built_in["config"], **{"user.attribute": "maas_preferred_username"}))
+    for current in (built_in, half_done):
+        admin = Admin(current)
+        sync.update_profile_username_mapper(admin)
+        assert len(admin.puts) == 1, admin.puts
+        written = admin.puts[0][1]
+        assert written["protocolMapper"] == "oidc-usermodel-attribute-mapper", written
+        assert written["config"]["user.attribute"] == "maas_preferred_username", written
+        assert written["config"]["claim.name"] == "preferred_username", written
+        # The next sync finds it in place and writes nothing.
+        admin = Admin(written)
+        sync.update_profile_username_mapper(admin)
+        assert admin.puts == [], admin.puts
+
+
 def main():
+    check_profile_username_mapper_sync()
     realms = {}
     for overlay in OVERLAYS:
         documents = render(overlay)
