@@ -3,6 +3,9 @@ kind: LokiStack
 metadata:
   name: usage-logs
   namespace: {{ .Values.o11yNamespace }}
+  annotations:
+    # After job-provision-loki-key (wave 1) creates its object storage Secret.
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   size: {{ .Values.lokiStack.size | quote }}
   limits:
